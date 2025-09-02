@@ -8,17 +8,10 @@
         {
             InitializeComponent();
         }
-
-        private void OnCounterClicked(object? sender, EventArgs e)
+        private async void OnBluetoothPairClicked(object sender, EventArgs e)
         {
-            count++;
-
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            // Placeholder for Bluetooth pairing logic
+            await DisplayAlert("Bluetooth", "Pairing process started...", "OK");
         }
     }
 }
