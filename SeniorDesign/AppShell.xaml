@@ -6,8 +6,8 @@
     xmlns:local="clr-namespace:SeniorDesign"
     Title="SeniorDesign">
 
+
     <ShellContent
-        Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
