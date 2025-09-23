@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microcharts.Maui; // <-- Add this
 
 namespace SeniorDesign
 {
@@ -9,6 +10,7 @@ namespace SeniorDesign
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMicrocharts() // <-- Add this line
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -16,7 +18,7 @@ namespace SeniorDesign
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

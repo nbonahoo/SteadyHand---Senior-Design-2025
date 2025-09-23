@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
              x:Class="SeniorDesign.MainPage"
              BackgroundColor="#FFCCCC">
-
     <Grid RowDefinitions="Auto,*">
 
         <!-- Header -->
@@ -20,27 +20,33 @@
                         Grid.Column="1"/> 
             </Grid>
         </StackLayout>
-        <!-- Graph Placeholders -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="10" Spacing="20">
 
-                <!-- Graph 1 placeholder -->
-                <BoxView HeightRequest="150" 
-                         BackgroundColor="#FF9999"
-                         CornerRadius="10"/>
+                <!-- Graph 1: Hand Shakiness -->
+                <Label Text="Hand Shakiness Over Time"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       HorizontalOptions="Center"/>
+                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
+                    <charts:ChartView x:Name="Graph1" HeightRequest="250"/>
+                </Frame>
 
-                <!-- Graph 2 placeholder -->
-                <BoxView HeightRequest="150"
-                         BackgroundColor="#FF9999"
-                         CornerRadius="10"/>
-
-                <!-- Graph 3 placeholder -->
-                <BoxView HeightRequest="150"
-                         BackgroundColor="#FF9999"
-                         CornerRadius="10"/>
+                <!-- Graph 2: Hand Temperature -->
+                <Label Text="Hand Temperature Over Time"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       HorizontalOptions="Center"/>
+                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
+                    <charts:ChartView x:Name="Graph2" HeightRequest="250"/>
+                </Frame>
 
             </VerticalStackLayout>
         </ScrollView>
+
+
 
     </Grid>
 </ContentPage>
