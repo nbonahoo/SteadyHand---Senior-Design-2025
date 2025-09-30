@@ -1,28 +1,26 @@
 ﻿using Microcharts;
 using SkiaSharp;
 
-
 namespace SeniorDesign;
+
 public partial class MainPage : ContentPage
 {
     public MainPage()
     {
         InitializeComponent();
 
-        Graph1.Chart = new LineChart
+        var shakinessChart = new LineChart
         {
             Entries = GenerateShakinessData(),
             LineSize = 4,
             PointSize = 6,
             LabelTextSize = 20,
-            BackgroundColor = SKColors.White,       // White background
-            ValueLabelOrientation = Orientation.Horizontal,
-            LabelOrientation = Orientation.Horizontal
-
+            BackgroundColor = SKColors.White,
+            LabelOrientation = Orientation.Horizontal,
+            ValueLabelOrientation = Orientation.Horizontal
         };
 
-        // Graph 2: Body Temperature
-        Graph2.Chart = new LineChart
+        var tempChart = new LineChart
         {
             Entries = GenerateTemperatureData(),
             LineSize = 4,
@@ -32,8 +30,27 @@ public partial class MainPage : ContentPage
             LabelOrientation = Orientation.Horizontal,
             ValueLabelOrientation = Orientation.Horizontal
         };
+
+        Graph1.Chart = shakinessChart;
+        Graph2.Chart = tempChart;
+
+        // Add tap gesture recognizers
+        var tapShakiness = new TapGestureRecognizer();
+        tapShakiness.Tapped += async (s, e) =>
+        {
+            await Navigation.PushAsync(new GraphDetailPage("Hand Shakiness Over Time", shakinessChart));
+        };
+        Graph1.GestureRecognizers.Add(tapShakiness);
+
+        var tapTemp = new TapGestureRecognizer();
+        tapTemp.Tapped += async (s, e) =>
+        {
+            await Navigation.PushAsync(new GraphDetailPage("Hand Temperature Over Time", tempChart));
+        };
+        Graph2.GestureRecognizers.Add(tapTemp);
     }
- // Generate shakiness data: small random fluctuations
+
+    // Generate shakiness data: small random fluctuations
     private ChartEntry[] GenerateShakinessData()
     {
         var random = new Random();
@@ -70,5 +87,4 @@ public partial class MainPage : ContentPage
         }
         return entries;
     }
-
 }
