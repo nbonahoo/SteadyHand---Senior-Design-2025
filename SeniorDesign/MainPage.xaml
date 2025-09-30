@@ -1,42 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
-             x:Class="SeniorDesign.MainPage"
-             BackgroundColor="#FFCCCC">
-
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui" x:Class="SeniorDesign.MainPage" BackgroundColor="#FFCCCC">
     <Grid RowDefinitions="Auto,*">
-
         <!-- Header -->
         <StackLayout Grid.Row="0" BackgroundColor="#CC0000" Padding="10">
             <Grid ColumnDefinitions="*,Auto">
-                <Label Text="SteadyHand"
-                       TextColor="White"
-                       FontSize="24"
-                       VerticalOptions="Center"/>
-                <Button Text="Pair Bluetooth"
-                        TextColor="White"
-                        BackgroundColor="#AA0000"
-                        CornerRadius="10"
-                        Grid.Column="1"/>
+                <Label Text="Steady hand" TextColor="White" FontSize="24" VerticalOptions="Center"/>
+                <Button Text="Pair Bluetooth" TextColor="White" BackgroundColor="#AA0000" CornerRadius="10" Grid.Column="1"/>
             </Grid>
         </StackLayout>
-
-        <!-- Graphs -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="10" Spacing="20">
-
-                <!-- Graph 1 -->
-                <charts:ChartView x:Name="Graph1" HeightRequest="150" />
-
-                <!-- Graph 2 -->
-                <charts:ChartView x:Name="Graph2" HeightRequest="150" />
-
-                <!-- Graph 3 -->
-                <charts:ChartView x:Name="Graph3" HeightRequest="150" />
-
+                <!-- Graph 1: Hand Shakiness -->
+                <Label Text="Hand Shakiness Over Time" FontSize="20" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
+                    <charts:ChartView x:Name="Graph1" HeightRequest="250"/>
+                </Frame>
+                <!-- Graph 2: Hand Temperature -->
+                <Label Text="Hand Temperature Over Time" FontSize="20" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
+                    <charts:ChartView x:Name="Graph2" HeightRequest="250"/>
+                </Frame>
             </VerticalStackLayout>
         </ScrollView>
-
     </Grid>
 </ContentPage>
