@@ -5,13 +5,41 @@ namespace SeniorDesign;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
+    private readonly DatabaseService _db;
+
+    public MainPage(DatabaseService db) // DatabaseService is injected
     {
         InitializeComponent();
+        _db = db;
+    }
 
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Load data from the database
+        var sensorData = await _db.GetDataAsync();
+
+        // If DB is empty, insert seed data for testing
+        if (sensorData.Count == 0)
+        {
+            var random = new Random();
+            for (int i = 0; i < 20; i++)
+            {
+                await _db.SaveDataAsync(new SensorData
+                {
+                    Timestamp = DateTime.Now.AddSeconds(i),
+                    Accelerometer = 0.5f + (float)(random.NextDouble() - 0.5),
+                    Temperature = 36f + (float)(random.NextDouble() * 1.5f)
+                });
+            }
+            sensorData = await _db.GetDataAsync();
+        }
+
+        // Build charts from DB data
         var shakinessChart = new LineChart
         {
-            Entries = GenerateShakinessData(),
+            Entries = GenerateShakinessData(sensorData),
             LineSize = 4,
             PointSize = 6,
             LabelTextSize = 20,
@@ -22,7 +50,7 @@ public partial class MainPage : ContentPage
 
         var tempChart = new LineChart
         {
-            Entries = GenerateTemperatureData(),
+            Entries = GenerateTemperatureData(sensorData),
             LineSize = 4,
             PointSize = 6,
             LabelTextSize = 20,
@@ -34,7 +62,7 @@ public partial class MainPage : ContentPage
         Graph1.Chart = shakinessChart;
         Graph2.Chart = tempChart;
 
-        // Add tap gesture recognizers
+        // Keep tap gesture recognizers for navigation
         var tapShakiness = new TapGestureRecognizer();
         tapShakiness.Tapped += async (s, e) =>
         {
@@ -50,41 +78,31 @@ public partial class MainPage : ContentPage
         Graph2.GestureRecognizers.Add(tapTemp);
     }
 
-    // Generate shakiness data: small random fluctuations
-    private ChartEntry[] GenerateShakinessData()
+    // Convert DB shakiness data into chart entries
+    private ChartEntry[] GenerateShakinessData(List<SensorData> sensorData)
     {
-        var random = new Random();
-        var entries = new ChartEntry[20];
-        for (int i = 0; i < 20; i++)
-        {
-            float value = 0.5f + (float)(random.NextDouble() - 0.5); // fluctuate around 0.5
-            entries[i] = new ChartEntry(value)
+        return sensorData
+            .Select(d => new ChartEntry(d.Accelerometer)
             {
-                Label = (i + 1).ToString(),         // numeric x-axis (time)
-                ValueLabel = value.ToString("0.00"),
-                Color = SKColors.Red,               // bright red line
-                TextColor = SKColors.Black          // readable numeric labels
-            };
-        }
-        return entries;
+                Label = d.Timestamp.ToString("HH:mm"),
+                ValueLabel = d.Accelerometer.ToString("0.00"),
+                Color = SKColors.Red,
+                TextColor = SKColors.Black
+            })
+            .ToArray();
     }
 
-    // Generate hand temperature data: ~36–37.5°C
-    private ChartEntry[] GenerateTemperatureData()
+    // Convert DB temperature data into chart entries
+    private ChartEntry[] GenerateTemperatureData(List<SensorData> sensorData)
     {
-        var random = new Random();
-        var entries = new ChartEntry[20];
-        for (int i = 0; i < 20; i++)
-        {
-            float value = 36f + (float)(random.NextDouble() * 1.5f);
-            entries[i] = new ChartEntry(value)
+        return sensorData
+            .Select(d => new ChartEntry(d.Temperature)
             {
-                Label = (i + 1).ToString(),        // numeric x-axis (time)
-                ValueLabel = value.ToString("0.0"),
-                Color = SKColors.Red,               // bright red line
+                Label = d.Timestamp.ToString("HH:mm"),
+                ValueLabel = d.Temperature.ToString("0.0"),
+                Color = SKColors.Red,
                 TextColor = SKColors.Black
-            };
-        }
-        return entries;
+            })
+            .ToArray();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microcharts.Maui; // <-- Add this
+using Microcharts.Maui;
+using System.IO; // for Path
+using Microsoft.Maui.Storage; // for FileSystem
 
 namespace SeniorDesign
 {
@@ -10,16 +12,18 @@ namespace SeniorDesign
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
-                .UseMicrocharts() // <-- Add this line
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+                .UseMicrocharts(); // chart support
 
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
+
+            // ✅ Register SQLite DatabaseService
+            builder.Services.AddSingleton<DatabaseService>(s =>
+            {
+                string dbPath = Path.Combine(FileSystem.AppDataDirectory, "steadyhand.db3");
+                return new DatabaseService(dbPath);
+            });
 
             return builder.Build();
         }
