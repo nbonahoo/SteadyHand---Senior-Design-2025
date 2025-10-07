@@ -18,23 +18,24 @@ The system also collects **accelerometer, gyroscope, and temperature data**, whi
 
 ##  Repository Structure
 
-C:.
+SteadyHand---Senior-Design-2025/
+│
 │   .gitattributes
 │   .gitignore
 │   README.md
 │   SeniorDesign.sln
 │   steadyHand.db
 │
-├───Database
+├───Database/                     # Database logic and storage
 │       database.py
 │
-├───Embedded
+├───Embedded/                     # ESP32 firmware and scripts
 │       gptPID.py
 │       main.py
-│       README.md
 │       switchpress.py
+│       README.md
 │
-└───SeniorDesign
+└───SeniorDesign/                 # .NET MAUI application
     │   App.xaml
     │   App.xaml.cs
     │   AppShell.xaml
@@ -48,64 +49,64 @@ C:.
     │   MauiProgram.cs
     │   SeniorDesign.csproj
     │
-    ├───Platforms
-    │   ├───Android
+    ├───Platforms/                # Platform-specific code
+    │   ├───Android/
     │   │   │   AndroidManifest.xml
     │   │   │   MainActivity.cs
     │   │   │   MainApplication.cs
     │   │   │
-    │   │   └───Resources
-    │   │       └───values
-    │   │               colors.xml
+    │   │   └───Resources/
+    │   │           values/colors.xml
     │   │
-    │   ├───iOS
+    │   ├───iOS/
     │   │   │   AppDelegate.cs
     │   │   │   Info.plist
     │   │   │   Program.cs
     │   │   │
-    │   │   └───Resources
+    │   │   └───Resources/
     │   │           PrivacyInfo.xcprivacy
     │   │
-    │   ├───MacCatalyst
+    │   ├───MacCatalyst/
     │   │       AppDelegate.cs
     │   │       Entitlements.plist
     │   │       Info.plist
     │   │       Program.cs
     │   │
-    │   ├───Tizen
+    │   ├───Tizen/
     │   │       Main.cs
     │   │       tizen-manifest.xml
     │   │
-    │   └───Windows
+    │   └───Windows/
     │           app.manifest
     │           App.xaml
     │           App.xaml.cs
     │           Package.appxmanifest
     │
-    ├───Properties
+    ├───Properties/
     │       launchSettings.json
     │
-    └───Resources
-        ├───AppIcon
+    └───Resources/                # App assets and UI resources
+        ├───AppIcon/
         │       appicon.svg
         │       appiconfg.svg
         │
-        ├───Fonts
+        ├───Fonts/
         │       OpenSans-Regular.ttf
         │       OpenSans-Semibold.ttf
         │
-        ├───Images
+        ├───Images/
         │       dotnet_bot.png
         │
-        ├───Raw
+        ├───Raw/
         │       AboutAssets.txt
         │
-        ├───Splash
+        ├───Splash/
         │       splash.svg
         │
-        └───Styles
+        └───Styles/
                 Colors.xaml
                 Styles.xaml
+
 ##  System Architecture
 
 ```
