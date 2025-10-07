@@ -18,6 +18,7 @@ The system also collects **accelerometer, gyroscope, and temperature data**, whi
 
 ##  Repository Structure
 
+```
 SteadyHand---Senior-Design-2025/
 │
 │   .gitattributes
@@ -106,7 +107,7 @@ SteadyHand---Senior-Design-2025/
         └───Styles/
                 Colors.xaml
                 Styles.xaml
-
+```
 ##  System Architecture
 
 ```
