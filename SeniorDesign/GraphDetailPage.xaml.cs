@@ -17,7 +17,6 @@ namespace SeniorDesign
             InitializeComponent();
             GraphTitle.Text = title;
             _title = title;
-            //_chart = chart;
 
             GraphTitle.Text = title;
             DetailedGraph.Chart = new LineChart
@@ -34,6 +33,7 @@ namespace SeniorDesign
                 LabelColor = new SKColor(33, 33, 33)
             };
 
+            _chart = DetailedGraph.Chart;
             // Show the back arrow automatically
             NavigationPage.SetHasBackButton(this, true);
         }
@@ -44,7 +44,7 @@ namespace SeniorDesign
             {
                 IEnumerable<Microcharts.ChartEntry>? entries = null;
 
-                // Extract entries based on chart type
+                // Extract entries depending on chart type
                 switch (_chart)
                 {
                     case LineChart lineChart:
@@ -74,18 +74,17 @@ namespace SeniorDesign
                 }
 
                 var csv = new StringBuilder();
-                csv.AppendLine("Label,Value,ValueLabel,Color");
+                csv.AppendLine("Time,Value");
 
                 foreach (var entry in entries)
                 {
-                    string label = entry.Label?.Replace(",", " ") ?? "";
-                    string valueLabel = entry.ValueLabel ?? "";
+                    // Label = Time (X-axis)
+                    string time = entry.Label?.Replace(",", " ") ?? "";
+
+                    // Value = Y-axis
                     string value = entry.Value.ToString();
 
-                    // Convert SKColor → #RRGGBB
-                    string color = $"#{entry.Color.Red:X2}{entry.Color.Green:X2}{entry.Color.Blue:X2}";
-
-                    csv.AppendLine($"{label},{value},{valueLabel},{color}");
+                    csv.AppendLine($"{time},{value}");
                 }
 
                 string fileName = $"{_title.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
