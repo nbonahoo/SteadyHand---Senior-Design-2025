@@ -1,17 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui" x:Class="SeniorDesign.MainPage" BackgroundColor="#FAFAFA">
+
     <ContentPage.Resources>
-        <Color x:Key="HeaderRed">#B71C1C</Color>
-        <Color x:Key="PrimaryRed">#C62828</Color>
+        <!-- Dark Header Blue: strong contrast on light backgrounds -->
+        <Color x:Key="HeaderBlue">#0A3D91</Color>
+
+        <!-- Primary Accent Blue: for buttons, links, etc. -->
+        <Color x:Key="PrimaryBlue">#1565C0</Color>
+
+        <!-- Text Color: high contrast on white / near-white -->
         <Color x:Key="TextDark">#212121</Color>
+
+
+        <!-- Backgrounds -->
         <Color x:Key="PageBackground">#FAFAFA</Color>
         <Color x:Key="CardBackground">#FFFFFF</Color>
+
+        <!-- Optional: Add hover or secondary accent -->
+        <Color x:Key="SecondaryBlue">#1E88E5</Color>
+        <Color x:Key="AccentBlueLight">#BBDEFB</Color>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- HEADER BAR -->
-        <Grid BackgroundColor="{StaticResource HeaderRed}"
+        <Grid BackgroundColor="{StaticResource HeaderBlue}"
               Padding="20,10"
               Grid.Row="0">
             <Grid.ColumnDefinitions>
@@ -28,7 +41,7 @@
 
             <Button Text="Pair Bluetooth"
                     TextColor="White"
-                    BackgroundColor="#8E0000"
+                    BackgroundColor="{StaticResource PrimaryBlue}"
                     FontAttributes="Bold"
                     FontSize="16"
                     CornerRadius="8"
@@ -39,7 +52,7 @@
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="16" Spacing="20">
                 <!-- Graph 1: Hand Shakiness -->
-                <Border Stroke="{StaticResource PrimaryRed}"
+                <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
                         BackgroundColor="{StaticResource CardBackground}"
@@ -59,7 +72,7 @@
                 </Border>
                 <!-- Graph 2: Hand Temperature -->
                 <!-- TEMPERATURE CHART CARD -->
-                <Border Stroke="{StaticResource PrimaryRed}"
+                <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
                         BackgroundColor="{StaticResource CardBackground}"
@@ -81,7 +94,7 @@
                 </Border>
             </VerticalStackLayout>
         </ScrollView>
-        <Grid Grid.Row="2" BackgroundColor="{StaticResource HeaderRed}" Padding="0,10">
+        <Grid Grid.Row="2" BackgroundColor="{StaticResource HeaderBlue}" Padding="0,10">
             <Label Text="2025 Steady Hand Project"
                    TextColor="White"
                    FontSize="12"

@@ -7,17 +7,29 @@
 
     <!-- Accessible color palette -->
     <ContentPage.Resources>
-        <Color x:Key="HeaderRed">#B71C1C</Color>
-        <Color x:Key="PrimaryRed">#C62828</Color>
-        <Color x:Key="TextDark">#212121</Color>
-        <Color x:Key="PageBackground">#FAFAFA</Color>
-        <Color x:Key="CardBackground">#FFFFFF</Color>
-    </ContentPage.Resources>
+        <!-- Dark Header Blue: strong contrast on light backgrounds -->
+            <Color x:Key="HeaderBlue">#0A3D91</Color>
+
+            <!-- Primary Accent Blue: for buttons, links, etc. -->
+            <Color x:Key="PrimaryBlue">#1565C0</Color>
+
+            <!-- Text Color: high contrast on white / near-white -->
+            <Color x:Key="TextDark">#212121</Color>
+
+            <!-- Backgrounds -->
+            <Color x:Key="PageBackground">#FAFAFA</Color>
+            <Color x:Key="CardBackground">#FFFFFF</Color>
+
+            <!-- Optional: Add hover or secondary accent -->
+            <Color x:Key="SecondaryBlue">#1E88E5</Color>
+            <Color x:Key="AccentBlueLight">#BBDEFB</Color>
+        </ContentPage.Resources>
+
 
     <Grid RowDefinitions="Auto,*, Auto">
 
         <!-- ✅ FULL-WIDTH HEADER BAR -->
-        <Grid BackgroundColor="{StaticResource HeaderRed}"
+        <Grid BackgroundColor="{StaticResource HeaderBlue}"
               Padding="20,10"
               Grid.Row="0"
               HorizontalOptions="FillAndExpand"
@@ -38,7 +50,7 @@
 
             <Button Text="Export Data"
                     Grid.Column="1"
-                    BackgroundColor="{StaticResource PrimaryRed}"
+                    BackgroundColor="{StaticResource PrimaryBlue}"
                     TextColor="White"
                     FontAttributes="Bold"
                     FontSize="16"
@@ -54,7 +66,7 @@
             <VerticalStackLayout Spacing="20">
 
                 <!-- Graph card using modern <Border> -->
-                <Border Stroke="{StaticResource PrimaryRed}"
+                <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 20"
                         BackgroundColor="{StaticResource CardBackground}"
@@ -71,7 +83,7 @@
         </ScrollView>
 
         <Grid Grid.Row="2"
-              BackgroundColor="{StaticResource HeaderRed}"
+              BackgroundColor="{StaticResource HeaderBlue}"
               Padding="10,5"
               HorizontalOptions="FillAndExpand">
             <Label Text=" 2025 Steady Hand Project"

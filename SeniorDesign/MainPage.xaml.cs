@@ -90,7 +90,8 @@ public partial class MainPage : ContentPage
         {
             Label = d.Timestamp.ToString("HH:mm"),
             ValueLabel = d.Accelerometer.ToString("0.00"),
-            Color = SKColors.Red,
+
+            Color = SKColor.Parse("#1565C0"),
             TextColor = SKColors.Black
         }).ToArray();
 
@@ -99,7 +100,7 @@ public partial class MainPage : ContentPage
         {
             Label = d.Timestamp.ToString("HH:mm"),
             ValueLabel = d.Temperature.ToString("0.0"),
-            Color = SKColors.Red,
+            Color = SKColor.Parse("#1565C0") ,// Primary blue
             TextColor = SKColors.Black
         }).ToArray();
 }
