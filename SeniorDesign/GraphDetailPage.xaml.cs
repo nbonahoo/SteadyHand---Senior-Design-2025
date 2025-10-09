@@ -1,8 +1,9 @@
-﻿using System.Text;
-using Microsoft.Maui.Storage;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
 using Microcharts;
 using Microcharts.Maui;
+using Microsoft.Maui.Storage;
 using SkiaSharp;
+using System.Text;
 
 namespace SeniorDesign
 {
@@ -11,15 +12,27 @@ namespace SeniorDesign
         private Chart _chart;
         private string _title;
 
-        public GraphDetailPage(string title, Chart chart)
+        public GraphDetailPage(string title, IEnumerable<ChartEntry> entries)
         {
             InitializeComponent();
-
+            GraphTitle.Text = title;
             _title = title;
-            _chart = chart;
+            //_chart = chart;
 
             GraphTitle.Text = title;
-            DetailedGraph.Chart = chart;
+            DetailedGraph.Chart = new LineChart
+            {
+                Entries = entries,
+                LineMode = LineMode.Straight,
+                LineSize = 4,
+                PointMode = PointMode.Circle,
+                PointSize = 6,
+                LabelTextSize = 20,
+                LabelOrientation = Orientation.Horizontal,
+                ValueLabelOrientation = Orientation.Horizontal,
+                BackgroundColor = SKColors.White,
+                LabelColor = new SKColor(33, 33, 33)
+            };
 
             // Show the back arrow automatically
             NavigationPage.SetHasBackButton(this, true);
@@ -31,7 +44,7 @@ namespace SeniorDesign
             {
                 IEnumerable<Microcharts.ChartEntry>? entries = null;
 
-                // Extract entries depending on chart type
+                // Extract entries based on chart type
                 switch (_chart)
                 {
                     case LineChart lineChart:
@@ -61,17 +74,18 @@ namespace SeniorDesign
                 }
 
                 var csv = new StringBuilder();
-                csv.AppendLine("Time,Value");
+                csv.AppendLine("Label,Value,ValueLabel,Color");
 
                 foreach (var entry in entries)
                 {
-                    // Label = Time (X-axis)
-                    string time = entry.Label?.Replace(",", " ") ?? "";
-
-                    // Value = Y-axis
+                    string label = entry.Label?.Replace(",", " ") ?? "";
+                    string valueLabel = entry.ValueLabel ?? "";
                     string value = entry.Value.ToString();
 
-                    csv.AppendLine($"{time},{value}");
+                    // Convert SKColor → #RRGGBB
+                    string color = $"#{entry.Color.Red:X2}{entry.Color.Green:X2}{entry.Color.Blue:X2}";
+
+                    csv.AppendLine($"{label},{value},{valueLabel},{color}");
                 }
 
                 string fileName = $"{_title.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";

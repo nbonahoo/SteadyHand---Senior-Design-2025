@@ -1,26 +1,93 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui" x:Class="SeniorDesign.MainPage" BackgroundColor="#FFCCCC">
-    <Grid RowDefinitions="Auto,*">
-        <!-- Header -->
-        <StackLayout Grid.Row="0" BackgroundColor="#CC0000" Padding="10">
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Steady hand" TextColor="White" FontSize="24" VerticalOptions="Center"/>
-                <Button Text="Pair Bluetooth" TextColor="White" BackgroundColor="#AA0000" CornerRadius="10" Grid.Column="1"/>
-            </Grid>
-        </StackLayout>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui" x:Class="SeniorDesign.MainPage" BackgroundColor="#FAFAFA">
+    <ContentPage.Resources>
+        <Color x:Key="HeaderRed">#B71C1C</Color>
+        <Color x:Key="PrimaryRed">#C62828</Color>
+        <Color x:Key="TextDark">#212121</Color>
+        <Color x:Key="PageBackground">#FAFAFA</Color>
+        <Color x:Key="CardBackground">#FFFFFF</Color>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- HEADER BAR -->
+        <Grid BackgroundColor="{StaticResource HeaderRed}"
+              Padding="20,10"
+              Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Label Text="Steady Hand"
+                   TextColor="White"
+                   FontAttributes="Bold"
+                   FontSize="28"
+                   VerticalOptions="Center"
+                   SemanticProperties.Description="Application title: Steady Hand" />
+
+            <Button Text="Pair Bluetooth"
+                    TextColor="White"
+                    BackgroundColor="#8E0000"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    CornerRadius="8"
+                    Padding="12,6"
+                    Grid.Column="1"
+                    SemanticProperties.Description="Button to pair the utensil via Bluetooth" />
+        </Grid>
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="10" Spacing="20">
+            <VerticalStackLayout Padding="16" Spacing="20">
                 <!-- Graph 1: Hand Shakiness -->
-                <Label Text="Hand Shakiness Over Time" FontSize="20" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
-                    <charts:ChartView x:Name="Graph1" HeightRequest="250"/>
-                </Frame>
+                <Border Stroke="{StaticResource PrimaryRed}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{StaticResource CardBackground}"
+                        SemanticProperties.Description="Hand shakiness chart card">
+                    <VerticalStackLayout Padding="20" Spacing="10">
+                        <Label Text="Hand Shakiness Over Time"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextDark}" />
+                        <charts:ChartView x:Name="Graph1" HeightRequest="250"
+                                          
+                                          />
+                    </VerticalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnShakinessTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
                 <!-- Graph 2: Hand Temperature -->
-                <Label Text="Hand Temperature Over Time" FontSize="20" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                <Frame CornerRadius="15" BackgroundColor="White" Padding="0" HasShadow="True">
-                    <charts:ChartView x:Name="Graph2" HeightRequest="250"/>
-                </Frame>
+                <!-- TEMPERATURE CHART CARD -->
+                <Border Stroke="{StaticResource PrimaryRed}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{StaticResource CardBackground}"
+                        SemanticProperties.Description="Hand temperature chart card">
+                    <VerticalStackLayout Padding="20" Spacing="10">
+                        <Label Text="Hand Temperature Over Time"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextDark}" />
+                        <charts:ChartView x:Name="Graph2"
+                                               HeightRequest="250"
+                                               SemanticProperties.Description="Line chart of hand temperature" 
+                                          />
+                    </VerticalStackLayout>
+                    <Border.GestureRecognizers>
+
+                        <TapGestureRecognizer Tapped="OnTemperatureTapped" />
+                    </Border.GestureRecognizers>
+                </Border>
             </VerticalStackLayout>
         </ScrollView>
+        <Grid Grid.Row="2" BackgroundColor="{StaticResource HeaderRed}" Padding="0,10">
+            <Label Text="2025 Steady Hand Project"
+                   TextColor="White"
+                   FontSize="12"
+                   HorizontalOptions="Center"
+                   SemanticProperties.Description="Footer with project copyright" />
+        </Grid>
     </Grid>
+
 </ContentPage>

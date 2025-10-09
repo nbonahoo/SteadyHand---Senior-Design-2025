@@ -3,35 +3,84 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
              x:Class="SeniorDesign.GraphDetailPage"
-             Title="Graph Details"
-             BackgroundColor="#FFCCCC">
+             BackgroundColor="#FAFAFA">
 
-    <Grid RowDefinitions="Auto,*" Padding="10">
+    <!-- Accessible color palette -->
+    <ContentPage.Resources>
+        <Color x:Key="HeaderRed">#B71C1C</Color>
+        <Color x:Key="PrimaryRed">#C62828</Color>
+        <Color x:Key="TextDark">#212121</Color>
+        <Color x:Key="PageBackground">#FAFAFA</Color>
+        <Color x:Key="CardBackground">#FFFFFF</Color>
+    </ContentPage.Resources>
 
-        <!-- Header with Title + Export button -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="5">
+    <Grid RowDefinitions="Auto,*, Auto">
+
+        <!-- ✅ FULL-WIDTH HEADER BAR -->
+        <Grid BackgroundColor="{StaticResource HeaderRed}"
+              Padding="20,10"
+              Grid.Row="0"
+              HorizontalOptions="FillAndExpand"
+              VerticalOptions="Start">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
             <Label x:Name="GraphTitle"
-                   FontSize="24"
+                   TextColor="White"
                    FontAttributes="Bold"
+                   FontSize="28"
                    VerticalOptions="Center"
-                   TextColor="Black"/>
-            <Button Text="Export to CSV"
-                    BackgroundColor="#AA0000"
-                    TextColor="White"
-                    CornerRadius="10"
-                    Padding="10,5"
+                   LineBreakMode="TailTruncation"
+                   SemanticProperties.Description="Graph title for the selected dataset" />
+
+            <Button Text="Export Data"
                     Grid.Column="1"
-                    Clicked="OnExportClicked"/>
+                    BackgroundColor="{StaticResource PrimaryRed}"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    CornerRadius="10"
+                    Padding="12,6"
+                    HorizontalOptions="End"
+                    SemanticProperties.Description="Button to export this graph data to CSV or Excel file"
+                    Clicked="OnExportClicked" />
         </Grid>
 
-        <!-- Graph Frame -->
-        <Frame Grid.Row="1"
-               CornerRadius="20"
-               BackgroundColor="White"
-               Padding="10"
-               HasShadow="True">
-            <charts:ChartView x:Name="DetailedGraph" HeightRequest="350"/>
-        </Frame>
+        <!-- ✅ MAIN CONTENT -->
+        <ScrollView Grid.Row="1" Padding="16,20,16,16">
+            <VerticalStackLayout Spacing="20">
 
+                <!-- Graph card using modern <Border> -->
+                <Border Stroke="{StaticResource PrimaryRed}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="{StaticResource CardBackground}"
+                        SemanticProperties.Description="Detailed line chart display of selected data"
+                        Shadow="5,5,10,#33000000">
+                    <VerticalStackLayout Padding="16" Spacing="10">
+                        <charts:ChartView x:Name="DetailedGraph"
+                                          HeightRequest="350"
+                                          SemanticProperties.Description="Chart visualization of selected graph data" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+        <Grid Grid.Row="2"
+              BackgroundColor="{StaticResource HeaderRed}"
+              Padding="10,5"
+              HorizontalOptions="FillAndExpand">
+            <Label Text=" 2025 Steady Hand Project"
+                   TextColor="White"
+                   FontSize="12"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   SemanticProperties.Description="Footer text displaying copyright" />
+        </Grid>
     </Grid>
+
 </ContentPage>

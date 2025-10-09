@@ -1,4 +1,5 @@
 ﻿using Microcharts;
+using Microcharts.Maui;
 using SkiaSharp;
 
 namespace SeniorDesign;
@@ -7,7 +8,7 @@ public partial class MainPage : ContentPage
 {
     private readonly DatabaseService _db;
 
-    public MainPage(DatabaseService db) // DatabaseService is injected
+    public MainPage(DatabaseService db)
     {
         InitializeComponent();
         _db = db;
@@ -16,11 +17,15 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        await LoadChartsAsync();
+    }
 
-        // Load data from the database
+    private async Task LoadChartsAsync()
+    {
+        // Load data from database
         var sensorData = await _db.GetDataAsync();
 
-        // If DB is empty, insert seed data for testing
+        // Seed test data if empty
         if (sensorData.Count == 0)
         {
             var random = new Random();
@@ -36,73 +41,65 @@ public partial class MainPage : ContentPage
             sensorData = await _db.GetDataAsync();
         }
 
-        // Build charts from DB data
-        var shakinessChart = new LineChart
+        // Create charts
+        Graph1.Chart = new LineChart
         {
             Entries = GenerateShakinessData(sensorData),
+            LineMode = LineMode.Straight,
             LineSize = 4,
+            PointMode = PointMode.Circle,
             PointSize = 6,
             LabelTextSize = 20,
             BackgroundColor = SKColors.White,
             LabelOrientation = Orientation.Horizontal,
-            ValueLabelOrientation = Orientation.Horizontal
+            ValueLabelOrientation = Orientation.Horizontal,
+            LabelColor = new SKColor(33, 33, 33)
         };
 
-        var tempChart = new LineChart
+        Graph2.Chart = new LineChart
         {
             Entries = GenerateTemperatureData(sensorData),
+            LineMode = LineMode.Straight,
             LineSize = 4,
+            PointMode = PointMode.Circle,
             PointSize = 6,
             LabelTextSize = 20,
             BackgroundColor = SKColors.White,
+            LabelColor = new SKColor(33, 33, 33),
             LabelOrientation = Orientation.Horizontal,
-            ValueLabelOrientation = Orientation.Horizontal
+            ValueLabelOrientation = Orientation.Horizontal,
         };
-
-        Graph1.Chart = shakinessChart;
-        Graph2.Chart = tempChart;
-
-        // Keep tap gesture recognizers for navigation
-        var tapShakiness = new TapGestureRecognizer();
-        tapShakiness.Tapped += async (s, e) =>
-        {
-            await Navigation.PushAsync(new GraphDetailPage("Hand Shakiness Over Time", shakinessChart));
-        };
-        Graph1.GestureRecognizers.Add(tapShakiness);
-
-        var tapTemp = new TapGestureRecognizer();
-        tapTemp.Tapped += async (s, e) =>
-        {
-            await Navigation.PushAsync(new GraphDetailPage("Hand Temperature Over Time", tempChart));
-        };
-        Graph2.GestureRecognizers.Add(tapTemp);
     }
 
-    // Convert DB shakiness data into chart entries
-    private ChartEntry[] GenerateShakinessData(List<SensorData> sensorData)
+    // Tap handlers — simple and clean
+    private async void OnShakinessTapped(object sender, EventArgs e)
     {
-        return sensorData
-            .Select(d => new ChartEntry(d.Accelerometer)
-            {
-                Label = d.Timestamp.ToString("HH:mm"),
-                ValueLabel = d.Accelerometer.ToString("0.00"),
-                Color = SKColors.Red,
-                TextColor = SKColors.Black
-            })
-            .ToArray();
+        var sensorData = await _db.GetDataAsync();
+        await Navigation.PushAsync(new GraphDetailPage("Hand Shakiness Over Time", GenerateShakinessData(sensorData)));
     }
 
-    // Convert DB temperature data into chart entries
-    private ChartEntry[] GenerateTemperatureData(List<SensorData> sensorData)
+    private async void OnTemperatureTapped(object sender, EventArgs e)
     {
-        return sensorData
-            .Select(d => new ChartEntry(d.Temperature)
-            {
-                Label = d.Timestamp.ToString("HH:mm"),
-                ValueLabel = d.Temperature.ToString("0.0"),
-                Color = SKColors.Red,
-                TextColor = SKColors.Black
-            })
-            .ToArray();
+        var sensorData = await _db.GetDataAsync();
+        await Navigation.PushAsync(new GraphDetailPage("Hand Temperature Over Time", GenerateTemperatureData(sensorData)));
     }
+
+    // Chart entry generation
+    private ChartEntry[] GenerateShakinessData(List<SensorData> data) =>
+        data.Select(d => new ChartEntry(d.Accelerometer)
+        {
+            Label = d.Timestamp.ToString("HH:mm"),
+            ValueLabel = d.Accelerometer.ToString("0.00"),
+            Color = SKColors.Red,
+            TextColor = SKColors.Black
+        }).ToArray();
+
+    private ChartEntry[] GenerateTemperatureData(List<SensorData> data) =>
+        data.Select(d => new ChartEntry(d.Temperature)
+        {
+            Label = d.Timestamp.ToString("HH:mm"),
+            ValueLabel = d.Temperature.ToString("0.0"),
+            Color = SKColors.Red,
+            TextColor = SKColors.Black
+        }).ToArray();
 }
