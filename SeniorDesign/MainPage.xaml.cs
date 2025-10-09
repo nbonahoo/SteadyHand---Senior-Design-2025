@@ -6,8 +6,9 @@ namespace SeniorDesign;
 public partial class MainPage : ContentPage
 {
     private readonly DatabaseService _db;
+    private bool _initialized = false; // 👈 Prevents duplicate setup
 
-    public MainPage(DatabaseService db) // DatabaseService is injected
+    public MainPage(DatabaseService db)
     {
         InitializeComponent();
         _db = db;
@@ -16,6 +17,10 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // Only load data + attach gestures once
+        if (_initialized) return;
+        _initialized = true;
 
         // Load data from the database
         var sensorData = await _db.GetDataAsync();
@@ -62,7 +67,7 @@ public partial class MainPage : ContentPage
         Graph1.Chart = shakinessChart;
         Graph2.Chart = tempChart;
 
-        // Keep tap gesture recognizers for navigation
+        // Add gesture recognizers ONCE
         var tapShakiness = new TapGestureRecognizer();
         tapShakiness.Tapped += async (s, e) =>
         {
@@ -78,7 +83,6 @@ public partial class MainPage : ContentPage
         Graph2.GestureRecognizers.Add(tapTemp);
     }
 
-    // Convert DB shakiness data into chart entries
     private ChartEntry[] GenerateShakinessData(List<SensorData> sensorData)
     {
         return sensorData
@@ -92,7 +96,6 @@ public partial class MainPage : ContentPage
             .ToArray();
     }
 
-    // Convert DB temperature data into chart entries
     private ChartEntry[] GenerateTemperatureData(List<SensorData> sensorData)
     {
         return sensorData
