@@ -1,12 +1,4 @@
-# ESP32 (Feather V2) + MPU-6050 + Kalman filter (MicroPython)
-# Estimates pitch and roll using a 2-state Kalman filter per axis (angle, gyro bias).
-# Wiring:
-#   MPU-6050 VCC -> 3.3V (or module VCC if it accepts 3.3V)
-#   GND -> GND
-#   SDA -> ESP32 SDA (GPIO21)
-#   SCL -> ESP32 SCL (GPIO22)
-# Note: many breakout boards include pull-ups. If not, add 4.7k pull-ups on SDA/SCL.
-
+import machine
 from machine import Pin, I2C
 from time import sleep_ms, ticks_us, ticks_diff
 import math
@@ -25,8 +17,22 @@ GYRO_XOUT_H = 0x43
 ACCEL_SCALE = 16384.0   # LSB/g for ±2g
 GYRO_SCALE = 131.0      # LSB/(°/s) for ±250°/s
 
-# ---- I2C init (adjust pins if needed) ----
+# ---- I2C init ----
 i2c = I2C(0, scl=Pin(20), sda=Pin(22), freq=400000)
+
+# ---- PWM init ----
+global pmA0
+pA0 = Pin(26)
+pmA0= machine.PWM(pA0)
+pmA0.duty(520)
+pmA0.freq(300)
+
+def move(frequency):
+    global pmA0
+    pmA0.duty(520)
+    pmA0.freq(frequency)
+    sleep_ms(10)
+    pmA0.duty(0)
 
 def mpu_write(reg, data):
     i2c.writeto_mem(MPU_ADDR, reg, bytes([data]))
@@ -79,6 +85,7 @@ class KalmanAngle:
         # Process noise variances
         self.Q_angle = Q_angle
         self.Q_bias = Q_bias
+        
         # Measurement noise variance
         self.R_measure = R_measure
 
@@ -102,6 +109,7 @@ class KalmanAngle:
         # Update covariance matrix P
         # P = A * P * A^T + Q
         # For our simple model:
+        
         self.P[0][0] += dt * (dt*self.P[1][1] - self.P[0][1] - self.P[1][0] + self.Q_angle)
         self.P[0][1] -= dt * self.P[1][1]
         self.P[1][0] -= dt * self.P[1][1]
@@ -137,6 +145,7 @@ def accel_to_pitch_roll(ax, ay, az):
     # pitch: rotation around X-axis: atan2(-ax, sqrt(ay^2 + az^2))
     # roll:  rotation around Y-axis: atan2(ay, az)
     # Use conventions: pitch positive when nose up
+    
     pitch = math.degrees(math.atan2(-ax, math.sqrt(ay*ay + az*az)))
     roll = math.degrees(math.atan2(ay, az))
     return pitch, roll
@@ -184,7 +193,8 @@ def main():
     kalman_roll.set_angle(roll)
 
     last_time = ticks_us()
-
+    freq_last = 0
+    freq = 300
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
         now = ticks_us()
@@ -201,20 +211,35 @@ def main():
         gz = gz_raw - gz_bias
 
         # compute accelerometer angles
-        a_pitch, a_roll = accel_to_pitch_roll(ax, ay, az)
+        a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
 
-        # note: depending on mounting/orientation, you may need to swap signs or axes
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
-        filt_pitch = kalman_pitch.get_angle(gx, a_pitch, dt)
-        filt_roll  = kalman_roll.get_angle(gy, a_roll, dt)
+        pitch_angle = kalman_pitch.get_angle(gx, a_pitch, dt)
+        roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
 
-        # optional: complementary fallback if kalman diverges (not usually necessary)
-        # comp_pitch = 0.98*(prev_comp_pitch + gx*dt) + 0.02*a_pitch
+        # Simulate motor control signal on rotation
+        # roll left
+        if roll_angle < 0:
+            ratio = (roll_angle) / 90
+            freq = (ratio * 100) + 300
+            freq = round(freq)
+        elif roll_angle > 0:
+            ratio = roll_angle / 90
+            freq = (ratio * 300) + 300
+            freq = round(freq)
+        else:
+            freq = 300
+#         print(freq)
+        
+        if abs(freq_last - freq) > 10:
+                freq_last = freq
+                move(freq)
+        else:
+#             print("No change in rotation")
 
-        print("Pitch: accel={:+06.2f} filt={:+06.2f} | Roll: accel={:+06.2f} filt={:+06.2f}".format(
-            a_pitch, filt_pitch, a_roll, filt_roll))
+        print("Pitch Angle:{:+06.2f} | Roll Angle:{:+06.2f}".format(pitch_angle, roll_angle))
         # adjust sleep to control update rate; loop timing dominated by i2c read
-        sleep_ms(20)
+        sleep_ms(15)
 
 if __name__ == "__main__":
     main()
