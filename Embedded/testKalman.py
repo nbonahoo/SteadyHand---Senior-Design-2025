@@ -24,15 +24,31 @@ i2c = I2C(0, scl=Pin(20), sda=Pin(22), freq=400000)
 global pmA0
 pA0 = Pin(26)
 pmA0= machine.PWM(pA0)
-pmA0.duty(520)
-pmA0.freq(300)
+pmA0.duty(512)
+pmA0.freq(600)
 
-def move(frequency):
-    global pmA0
-    pmA0.duty(520)
-    pmA0.freq(frequency)
-    sleep_ms(10)
-    pmA0.duty(0)
+global pmA1
+pA1 = Pin(25)
+pmA1= machine.PWM(pA1)
+pmA1.duty(512)
+pmA1.freq(600)
+
+def move(frequency, motor):
+    if motor == 1:
+        global pmA0
+        pmA0.duty(512)
+        pmA0.freq(frequency)
+        sleep_ms(10)
+        pmA0.duty(0)
+        
+    elif motor == 2:
+        global pmA1
+        pmA1.duty(512)
+        pmA1.freq(frequency)
+        sleep_ms(10)
+        pmA1.duty(0)
+    else:
+        print("\nMOTOR SELECTION ERROR\n");
 
 def mpu_write(reg, data):
     i2c.writeto_mem(MPU_ADDR, reg, bytes([data]))
@@ -148,7 +164,8 @@ def accel_to_pitch_roll(ax, ay, az):
     
     pitch = math.degrees(math.atan2(-ax, math.sqrt(ay*ay + az*az)))
     roll = math.degrees(math.atan2(ay, az))
-    return pitch, roll
+    yaw = math.degrees(math.atan2(az, math.sqrt(ax*ax + az*az)))
+    return pitch, roll, yaw
 
 # ---- Gyro bias calibration ----
 def calibrate_gyro(samples=200, delay_ms=5):
@@ -185,16 +202,19 @@ def main():
     # larger Q_bias -> allows bias to vary more quickly, etc.
     kalman_pitch = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
     kalman_roll  = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
-
+    kalman_yaw = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
     # Initialize angles from accel for a stable starting point
     ax, ay, az, gx, gy, gz = read_accel_gyro()
-    pitch, roll = accel_to_pitch_roll(ax, ay, az)
+    pitch, roll, yaw = accel_to_pitch_roll(ax, ay, az)
     kalman_pitch.set_angle(pitch)
     kalman_roll.set_angle(roll)
+    kalman_yaw.set_angle(yaw)
 
     last_time = ticks_us()
-    freq_last = 0
-    freq = 300
+    rfreq_last = 0
+    rfreq = 300
+    pfreq_last = 0
+    pfreq = 300
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
         now = ticks_us()
@@ -211,33 +231,54 @@ def main():
         gz = gz_raw - gz_bias
 
         # compute accelerometer angles
-        a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
+        a_roll, a_pitch, a_yaw = accel_to_pitch_roll(ax, ay, az)
 
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
-        pitch_angle = kalman_pitch.get_angle(gx, a_pitch, dt)
+        pitch_angle = -1 * kalman_pitch.get_angle(gx, a_pitch, dt)
         roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
-
+        yaw_angle = kalman_yaw.get_angle(gz, a_yaw, dt)
+        
         # Simulate motor control signal on rotation
         # roll left
-        if roll_angle < 0:
+        if roll_angle <= 0:
             ratio = (roll_angle) / 90
-            freq = (ratio * 100) + 300
-            freq = round(freq)
+            rfreq = (ratio * 300) + 600
+            rfreq = round(rfreq)
         elif roll_angle > 0:
             ratio = roll_angle / 90
-            freq = (ratio * 300) + 300
-            freq = round(freq)
-        else:
-            freq = 300
-#         print(freq)
+            rfreq = (ratio * 400) + 600
+            rfreq = round(rfreq)
+#         else:
+#             freq = 600
+        print(rfreq)
         
-        if abs(freq_last - freq) > 10:
-                freq_last = freq
-                move(freq)
+        if abs(rfreq_last - rfreq) > 8:
+                rfreq_last = rfreq
+                move(rfreq, 1)
         else:
-#             print("No change in rotation")
+            print("No change in rotation")
+            
+        # Simulate motor control signal on Pitch
+        # pitch down
+        if pitch_angle <= 0:
+            ratio = (pitch_angle) / 90
+            pfreq = (ratio * 300) + 600
+            pfreq = round(pfreq)
+        elif pitch_angle > 0:
+            ratio = pitch_angle / 90
+            pfreq = (ratio * 400) + 600
+            pfreq = round(pfreq)
+#         else:
+#             freq = 600
+        print(pfreq)
+        
+        if abs(pfreq_last - pfreq) > 8:
+                pfreq_last = pfreq
+                move(pfreq, 2)
+        else:
+            print("No change in pitch")
 
-        print("Pitch Angle:{:+06.2f} | Roll Angle:{:+06.2f}".format(pitch_angle, roll_angle))
+        print("Pitch Angle:{:+06.2f} | Roll Angle:{:+06.2f} | Yaw Angle:{:+06.2f}".format(pitch_angle, roll_angle, yaw_angle))
         # adjust sleep to control update rate; loop timing dominated by i2c read
         sleep_ms(15)
 
