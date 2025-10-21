@@ -7,28 +7,18 @@
 
     <!-- Accessible color palette -->
     <ContentPage.Resources>
-        <!-- Dark Header Blue: strong contrast on light backgrounds -->
-            <Color x:Key="HeaderBlue">#0A3D91</Color>
+        <Color x:Key="HeaderBlue">#0A3D91</Color>
+        <Color x:Key="PrimaryBlue">#1565C0</Color>
+        <Color x:Key="TextDark">#212121</Color>
+        <Color x:Key="PageBackground">#FAFAFA</Color>
+        <Color x:Key="CardBackground">#FFFFFF</Color>
+        <Color x:Key="SecondaryBlue">#1E88E5</Color>
+        <Color x:Key="AccentBlueLight">#BBDEFB</Color>
+    </ContentPage.Resources>
 
-            <!-- Primary Accent Blue: for buttons, links, etc. -->
-            <Color x:Key="PrimaryBlue">#1565C0</Color>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-            <!-- Text Color: high contrast on white / near-white -->
-            <Color x:Key="TextDark">#212121</Color>
-
-            <!-- Backgrounds -->
-            <Color x:Key="PageBackground">#FAFAFA</Color>
-            <Color x:Key="CardBackground">#FFFFFF</Color>
-
-            <!-- Optional: Add hover or secondary accent -->
-            <Color x:Key="SecondaryBlue">#1E88E5</Color>
-            <Color x:Key="AccentBlueLight">#BBDEFB</Color>
-        </ContentPage.Resources>
-
-
-    <Grid RowDefinitions="Auto,*, Auto">
-
-        <!-- ✅ FULL-WIDTH HEADER BAR -->
+        <!-- ✅ HEADER -->
         <Grid BackgroundColor="{StaticResource HeaderBlue}"
               Padding="20,10"
               Grid.Row="0"
@@ -61,28 +51,72 @@
                     Clicked="OnExportClicked" />
         </Grid>
 
-        <!-- ✅ MAIN CONTENT -->
-        <ScrollView Grid.Row="1" Padding="16,20,16,16">
+        <!-- ✅ STATUS LABEL -->
+        <Label x:Name="ExportStatusLabel"
+               Grid.Row="1"
+               Text=""
+               FontSize="14"
+               TextColor="{StaticResource TextDark}"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Margin="0,4,0,0"
+               SemanticProperties.Description="Label that displays export status or completion time" />
+
+        <!-- ✅ MAIN GRAPH SECTION -->
+        <ScrollView Grid.Row="2" Padding="16,20,16,16">
             <VerticalStackLayout Spacing="20">
 
-                <!-- Graph card using modern <Border> -->
                 <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 20"
                         BackgroundColor="{StaticResource CardBackground}"
                         SemanticProperties.Description="Detailed line chart display of selected data"
                         Shadow="5,5,10,#33000000">
-                    <VerticalStackLayout Padding="16" Spacing="10">
+
+                    <!-- Axis Labels Container -->
+                    <Grid RowDefinitions="Auto,* ,Auto"
+                          ColumnDefinitions="Auto,*"
+                          Padding="16">
+
+                        <!-- ✅ Y-Axis Label (dynamic) -->
+                        <Label x:Name="YAxisLabel"
+                               Text="Value"
+                               Grid.Row="1"
+                               Grid.Column="0"
+                               Rotation="270"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center"
+                               TextColor="{StaticResource TextDark}"
+                               FontAttributes="Bold"
+                               FontSize="16"
+                               Margin="-50"
+                               SemanticProperties.Description="Y axis label" />
+
+                        <!-- Chart -->
                         <charts:ChartView x:Name="DetailedGraph"
+                                          Grid.Row="1"
+                                          Grid.Column="1"
                                           HeightRequest="350"
                                           SemanticProperties.Description="Chart visualization of selected graph data" />
-                    </VerticalStackLayout>
+
+                        <!-- X-Axis Label -->
+                        <Label Text="Time"
+                               Grid.Row="2"
+                               Grid.Column="1"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Start"
+                               TextColor="{StaticResource TextDark}"
+                               FontAttributes="Bold"
+                               FontSize="16"
+                               Margin="0,8,0,0"
+                               SemanticProperties.Description="X axis label" />
+                    </Grid>
                 </Border>
             </VerticalStackLayout>
-
         </ScrollView>
 
-        <Grid Grid.Row="2"
+        <!-- ✅ FOOTER -->
+        <Grid Grid.Row="3"
               BackgroundColor="{StaticResource HeaderBlue}"
               Padding="10,5"
               HorizontalOptions="FillAndExpand">
@@ -93,6 +127,6 @@
                    VerticalOptions="Center"
                    SemanticProperties.Description="Footer text displaying copyright" />
         </Grid>
-    </Grid>
 
+    </Grid>
 </ContentPage>

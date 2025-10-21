@@ -4,6 +4,7 @@ using Microcharts.Maui;
 using Microsoft.Maui.Storage;
 using SkiaSharp;
 using System.Text;
+using System.Diagnostics;
 
 namespace SeniorDesign
 {
@@ -11,14 +12,34 @@ namespace SeniorDesign
     {
         private Chart _chart;
         private string _title;
+        private string _unitLabel; // <-- new: holds "Temperature (°C)" or "Acceleration (m/s²)"
 
         public GraphDetailPage(string title, IEnumerable<ChartEntry> entries)
         {
             InitializeComponent();
-            GraphTitle.Text = title;
-            _title = title;
 
+            _title = title;
             GraphTitle.Text = title;
+            NavigationPage.SetHasBackButton(this, true);
+
+            // ✅ Dynamically set Y-axis label and unit for export
+            if (title.ToLower().Contains("temperature"))
+            {
+                YAxisLabel.Text = "Temperature (°C)";
+                _unitLabel = "Temperature (°C)";
+            }
+            else if (title.ToLower().Contains("shakiness") || title.ToLower().Contains("acceleration"))
+            {
+                YAxisLabel.Text = "Acceleration (m/s²)";
+                _unitLabel = "Acceleration (m/s²)";
+            }
+            else
+            {
+                YAxisLabel.Text = "Value";
+                _unitLabel = "Value";
+            }
+
+            // ✅ Configure chart
             DetailedGraph.Chart = new LineChart
             {
                 Entries = entries,
@@ -34,17 +55,20 @@ namespace SeniorDesign
             };
 
             _chart = DetailedGraph.Chart;
-            // Show the back arrow automatically
-            NavigationPage.SetHasBackButton(this, true);
         }
 
         private async void OnExportClicked(object sender, EventArgs e)
         {
             try
             {
-                IEnumerable<Microcharts.ChartEntry>? entries = null;
+                // ⏳ Start timing
+                var stopwatch = Stopwatch.StartNew();
+                ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Gray;
+                ExportStatusLabel.Text = "Exporting data...";
 
-                // Extract entries depending on chart type
+                IEnumerable<ChartEntry>? entries = null;
+
+                // ✅ Extract entries depending on chart type
                 switch (_chart)
                 {
                     case LineChart lineChart:
@@ -69,37 +93,45 @@ namespace SeniorDesign
 
                 if (entries == null || !entries.Any())
                 {
+                    ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.OrangeRed;
+                    ExportStatusLabel.Text = " No data to export.";
                     await DisplayAlert("No Data", "There is no data to export.", "OK");
                     return;
                 }
 
+                // ✅ Create CSV with correct header
                 var csv = new StringBuilder();
-                csv.AppendLine("Time,Value");
+                csv.AppendLine($"Time,{_unitLabel}");
 
                 foreach (var entry in entries)
                 {
-                    // Label = Time (X-axis)
                     string time = entry.Label?.Replace(",", " ") ?? "";
-
-                    // Value = Y-axis
                     string value = entry.Value.ToString();
-
                     csv.AppendLine($"{time},{value}");
                 }
 
+                // ✅ Save to file
                 string fileName = $"{_title.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
                 string filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
-
                 File.WriteAllText(filePath, csv.ToString());
 
+                // ✅ Share the file
                 await Share.Default.RequestAsync(new ShareFileRequest
                 {
                     Title = "Exported Graph Data",
                     File = new ShareFile(filePath)
                 });
+
+                // ✅ Done
+                stopwatch.Stop();
+                double seconds = stopwatch.Elapsed.TotalSeconds;
+                ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Green;
+                ExportStatusLabel.Text = $"Export complete in {seconds:F2} seconds at {DateTime.Now:hh:mm:ss tt}";
             }
             catch (Exception ex)
             {
+                ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Red;
+                ExportStatusLabel.Text = $"Export failed: {ex.Message}";
                 await DisplayAlert("Export Failed", $"Error exporting CSV: {ex.Message}", "OK");
             }
         }
