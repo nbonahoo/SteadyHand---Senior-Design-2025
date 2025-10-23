@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microcharts.Maui;
-using System.IO; // for Path
-using Microsoft.Maui.Storage; // for FileSystem
 
 namespace SeniorDesign
 {
@@ -10,20 +8,17 @@ namespace SeniorDesign
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
+
             builder
                 .UseMauiApp<App>()
-                .UseMicrocharts(); // chart support
+                .UseMicrocharts(); // Enables Microcharts.MAUI support
 
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
 
-            // ✅ Register SQLite DatabaseService
-            builder.Services.AddSingleton<DatabaseService>(s =>
-            {
-                string dbPath = Path.Combine(FileSystem.AppDataDirectory, "steadyhand.db3");
-                return new DatabaseService(dbPath);
-            });
+            // ✅ Register HTTP-based DatabaseService (connects to FastAPI server)
+            builder.Services.AddSingleton<DatabaseService>();
 
             return builder.Build();
         }
