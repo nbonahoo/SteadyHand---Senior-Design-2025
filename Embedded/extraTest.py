@@ -25,50 +25,22 @@ OUT_X_L = 0x28  # 6 bytes: X_L,X_H,Y_L,Y_H,Z_L,Z_H
 ACCEL_SCALE = 16384.0   # LSB/g for ±2g
 GYRO_SCALE = 131.0      # LSB/(°/s) for ±250°/s
 
-# ---- I2C init ----
+# ---- I2C init ---- #
 i2c = I2C(0, scl=Pin(20), sda=Pin(22), freq=400000)
 
-# ---- PWM init ----
-global pmA0
-pA0 = Pin(26)
-pmA0= machine.PWM(pA0)
-pmA0.duty(512)
-pmA0.freq(300)
+def mpu_write(reg, data):
+    i2c.writeto_mem(MPU_ADDR, reg, bytes([data]))
 
-global pmA1
-pA1 = Pin(25)
-pmA1= machine.PWM(pA1)
-pmA1.duty(512)
-pmA1.freq(600)
+def mpu_read(reg, n):
+    return i2c.readfrom_mem(MPU_ADDR, reg, n)
 
-global pmA5
-pA5 = Pin(4)
-pmA5= machine.PWM(pA5)
-pmA5.duty(512)
-pmA5.freq(600)
+def lis_write(reg, data):
+    i2c.writeto_mem(LIS3MDL_ADDR, reg, bytes([data]))
 
-def move(frequency, motor):
-    if motor == 1:
-        global pmA0
-        pmA0.duty(512)
-        pmA0.freq(frequency)
-        sleep_ms(10)
-        pmA0.duty(0)
-    elif motor == 2:
-        global pmA1
-        pmA1.duty(512)
-        pmA1.freq(frequency)
-        sleep_ms(10)
-        pmA1.duty(0)
-    elif motor == 3:
-        global pmA5
-        pmA5.duty(512)
-        pmA5.freq(frequency)
-        sleep_ms(10)
-        pmA5.duty(0)
-    else:
-        print("\nMOTOR SELECTION ERROR\n");
+def lis_read(reg, n):
+    return i2c.readfrom_mem(LIS3MDL_ADDR, reg, n)
 
+# ---- Read Accelerometer ---- #
 def mpu_write(reg, data):
     i2c.writeto_mem(MPU_ADDR, reg, bytes([data]))
 
@@ -113,6 +85,37 @@ def read_accel_gyro():
     gy_dps = gy / GYRO_SCALE
     gz_dps = gz / GYRO_SCALE
     return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps)
+
+# -------------------- LIS3MDL functions --------------------
+def lis3mdl_init():
+    who = lis_read(WHO_AM_I, 1)[0]
+    if who != 0x3D:
+        print("Warning: LIS3MDL WHO_AM_I not 0x3D (got 0x{:02X})".format(who))
+    # Configure for 80 Hz, ultra-high-performance XY and Z, continuous mode
+    lis_write(CTRL_REG1, 0b11111100)  # Temp disable, 80Hz, high-perf XY
+    lis_write(CTRL_REG2, 0b00000000)  # +/-4 gauss
+    lis_write(CTRL_REG3, 0b00000000)  # continuous-conversion mode
+    sleep_ms(50)
+
+def read_magnetometer():
+    data = lis_read(OUT_X_L | 0x80, 6)  # auto-increment
+    x = (data[1] << 8) | data[0]
+    y = (data[3] << 8) | data[2]
+    z = (data[5] << 8) | data[4]
+    
+    for v in (x, y, z):
+        if v & 0x8000:
+            v -= 65536
+    # Convert to microtesla (±4 gauss = ±400 µT range => 6842 LSB/gauss)
+    # 1 gauss = 100 µT
+    x = x % 10000
+    y = y % 10000
+    z = z % 10000
+    print("x: ", x)
+    print("y: ", y)
+    print("z: ", z)
+    SCALE = 6842.0 / 100.0
+    return x / SCALE, y / SCALE, z / SCALE
 
 # ---- Simple Kalman filter for angle (angle + bias) ----
 class KalmanAngle:
@@ -185,6 +188,22 @@ def accel_to_pitch_roll(ax, ay, az):
     roll = math.degrees(math.atan2(ay, az))
     return pitch, roll
 
+def tilt_compensated_yaw(mx, my, mz, pitch, roll):
+    # Convert degrees to radians
+    pitch_rad = math.radians(pitch)
+    roll_rad = math.radians(roll)
+    # Apply tilt compensation
+    Xh = mx * math.cos(pitch_rad) + mz * math.sin(pitch_rad)
+    print("Xh: ", Xh)
+    Yh = mx * math.sin(roll_rad) * math.sin(pitch_rad) + my * math.cos(roll_rad) - mz * math.sin(roll_rad) * math.cos(pitch_rad)
+    print("Yh: ", Yh)
+    yaw = math.degrees(math.atan2(Yh, Xh))
+#     yaw = math.degrees(math.atan2(my, mx))
+    print("yaw: ", yaw)
+    if yaw < 0:
+        yaw += 360
+    return yaw
+
 # ---- Gyro bias calibration ----
 def calibrate_gyro(samples=200, delay_ms=5):
     print("Calibrating gyro bias: keep board still...")
@@ -205,6 +224,7 @@ def calibrate_gyro(samples=200, delay_ms=5):
 def main():
     try:
         mpu_init()
+        lis3mdl_init()
     except Exception as e:
         print("MPU init failed:", e)
         return
@@ -212,9 +232,6 @@ def main():
     # warm up read
     sleep_ms(100)
     
-    # init motor start positions
-    move(300, 1)
-    move(600, 2)
     # calibrate gyro biases (in dps)
     gx_bias, gy_bias, gz_bias = calibrate_gyro(samples=300, delay_ms=5)
 
@@ -223,18 +240,20 @@ def main():
     # larger Q_bias -> allows bias to vary more quickly, etc.
     kalman_pitch = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
     kalman_roll  = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
-
-    # Initialize angles from accel for a stable starting point
+#     kalman_yaw = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
+    
+    # Initialize angles from accel and magno for a stable starting point
     ax, ay, az, gx, gy, gz = read_accel_gyro()
+    mx, my, mz = read_magnetometer()
+    
     pitch, roll = accel_to_pitch_roll(ax, ay, az)
+    yaw = tilt_compensated_yaw(mx, my, mz, pitch, roll)
+
     kalman_pitch.set_angle(pitch)
     kalman_roll.set_angle(roll)
-
+#     kalman_yaw.set_angle(yaw)
+    
     last_time = ticks_us()
-    rfreq_last = 0
-    rfreq = 300
-    pfreq_last = 0
-    pfreq = 300
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
         now = ticks_us()
@@ -244,65 +263,25 @@ def main():
         last_time = now
 
         ax, ay, az, gx_raw, gy_raw, gz_raw = read_accel_gyro()
-
+        mx, my, mz = read_magnetometer()
+    
         # subtract calibration biases from gyro readings
         gx = gx_raw - gx_bias
         gy = gy_raw - gy_bias
         gz = gz_raw - gz_bias
 
-        # compute accelerometer angles
+        # compute accelerometer and magnometer angles
         a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
-
+        yaw = tilt_compensated_yaw(mx, my, mz, pitch, roll)
+        
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
         pitch_angle = -1 * kalman_pitch.get_angle(gx, a_pitch, dt)
         roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
+#         yaw_angle = kalman_yaw.get_angle(gz, yaw, dt)
         
-        # Simulate motor control signal on rotation
-        # roll left
-        if roll_angle <= 0:
-            ratio = (roll_angle) / 90
-            rfreq = (ratio * 300) + 600
-            rfreq = round(rfreq)
-        elif roll_angle > 0:
-            ratio = roll_angle / 90
-            rfreq = (ratio * 400) + 600
-            rfreq = round(rfreq)
-#         else:
-#             freq = 600
-#         print(rfreq)
-        if rfreq < 1000 and rfreq > 300:
-            if abs(rfreq_last - rfreq) > 8:
-                    rfreq_last = rfreq
-                    move(rfreq, 1)
-            else:
-                dummy = 0
-#                 print("No change in rotation")
-        else:
-            dummy = 0
-#             print("Out of bounds frequency")
-            
-        # Simulate motor control signal on Pitch
-        # pitch down
-        if pitch_angle <= 0:
-            ratio = (pitch_angle) / 90
-            pfreq = (ratio * 300 ) + 600
-            pfreq = round(pfreq)
-        elif pitch_angle > 0:
-            ratio = pitch_angle / 90
-            pfreq = (ratio * 400) + 600
-            pfreq = round(pfreq)
-#         else:
-#             freq = 600
-#         print(pfreq)
         
-        if abs(pfreq_last - pfreq) > 8:
-                pfreq_last = pfreq
-                move(pfreq, 2)
-        else:
-            duummy = 0
-#             print("N-o change in pitch")
         # placeholder
-        yaw_angle = 0
+        yaw_angle = yaw
         print("Pitch Angle:{:+06.2f} | Roll Angle:{:+06.2f} | Yaw Angle:{:+06.2f}".format(pitch_angle, roll_angle, yaw_angle))
         # adjust sleep to control update rate; loop timing dominated by i2c read
         sleep_ms(15)
