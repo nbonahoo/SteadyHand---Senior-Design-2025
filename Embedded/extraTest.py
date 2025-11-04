@@ -179,6 +179,19 @@ class KalmanAngle:
         return self.angle
 
 # ---- Utility: accel -> angles (degrees) ----
+def wrap_angle(angle):
+    while angle < 0:
+        angle += 360
+    while angle >= 360:
+        angle -= 360
+    return angle
+
+def normalize_mag(mx, my, mz):
+    mag_norm = math.sqrt(mx*mx + my*my + mz*mz)
+    if mag_norm == 0:
+        return mx, my, mz
+    return mx / mag_norm, my / mag_norm, mz / mag_norm
+
 def accel_to_pitch_roll(ax, ay, az):
     # pitch: rotation around X-axis: atan2(-ax, sqrt(ay^2 + az^2))
     # roll:  rotation around Y-axis: atan2(ay, az)
@@ -193,12 +206,14 @@ def tilt_compensated_yaw(mx, my, mz, pitch, roll):
     pitch_rad = math.radians(pitch)
     roll_rad = math.radians(roll)
     # Apply tilt compensation
+    mx, my, mz = normalize_mag(mx, my, mz)
     Xh = mx * math.cos(pitch_rad) + mz * math.sin(pitch_rad)
     print("Xh: ", Xh)
     Yh = mx * math.sin(roll_rad) * math.sin(pitch_rad) + my * math.cos(roll_rad) - mz * math.sin(roll_rad) * math.cos(pitch_rad)
     print("Yh: ", Yh)
     yaw = math.degrees(math.atan2(Yh, Xh))
 #     yaw = math.degrees(math.atan2(my, mx))
+    yaw = wrap_angle(yaw)
     print("yaw: ", yaw)
     if yaw < 0:
         yaw += 360
