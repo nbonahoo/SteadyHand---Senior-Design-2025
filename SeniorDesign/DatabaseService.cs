@@ -15,7 +15,7 @@ namespace SeniorDesign
         private readonly HttpClient _http = new();
 
         // 👇 Replace with your server’s IP
-        private const string ServerUrl = "http://172.20.10.3:5000/data";
+        private const string ServerUrl = "https://steadyhand-server.onrender.com/data";
 
         private List<SensorData> _cachedData = new();
         private readonly Timer _refreshTimer;
