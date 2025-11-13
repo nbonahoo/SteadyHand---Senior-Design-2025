@@ -2,6 +2,7 @@ import machine
 from machine import Pin, I2C
 from time import sleep_ms, ticks_us, ticks_diff
 import math
+import numpy as np
 
 # ---- MPU-6050 constants ----
 MPU_ADDR = 0x68
@@ -70,21 +71,25 @@ def read_raw16(addr):
         val = -((65535 - val) + 1)
     return val
 
-def read_accel_gyro():
+def read_accel():
     ax = read_raw16(ACCEL_XOUT_H)
     ay = read_raw16(ACCEL_XOUT_H + 2)
     az = read_raw16(ACCEL_XOUT_H + 4)
-    gx = read_raw16(GYRO_XOUT_H)
-    gy = read_raw16(GYRO_XOUT_H + 2)
-    gz = read_raw16(GYRO_XOUT_H + 4)
     # convert to physical units
     ax_g = ax / ACCEL_SCALE
     ay_g = ay / ACCEL_SCALE
     az_g = az / ACCEL_SCALE
+    return np.array([ax_g, ay_g, az_g])
+
+def read_gyro():
+    gx = read_raw16(GYRO_XOUT_H)
+    gy = read_raw16(GYRO_XOUT_H + 2)
+    gz = read_raw16(GYRO_XOUT_H + 4)
+    # convert to physical units
     gx_dps = gx / GYRO_SCALE
     gy_dps = gy / GYRO_SCALE
     gz_dps = gz / GYRO_SCALE
-    return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps)
+    return np.array([gx_dps, gy_dps, gz_dps])
 
 # -------------------- LIS3MDL functions --------------------
 def lis3mdl_init():
@@ -115,7 +120,7 @@ def read_magnetometer():
     print("y: ", y)
     print("z: ", z)
     SCALE = 6842.0 / 100.0
-    return x / SCALE, y / SCALE, z / SCALE
+    return np.array([x / SCALE, y / SCALE, z / SCALE])
 
 # ---- Simple Kalman filter for angle (angle + bias) ----
 class KalmanAngle:
@@ -294,7 +299,7 @@ def main():
         roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
 #         yaw_angle = kalman_yaw.get_angle(gz, yaw, dt)
         
-        
+
         # placeholder
         yaw_angle = yaw
         print("Pitch Angle:{:+06.2f} | Roll Angle:{:+06.2f} | Yaw Angle:{:+06.2f}".format(pitch_angle, roll_angle, yaw_angle))
