@@ -2,7 +2,9 @@ import machine
 from machine import Pin, I2C
 from time import sleep_ms, ticks_us, ticks_diff
 import math
+from motor import Motor
 from PID import PID
+from kalmanFilter import *
 
 # ---- MPU-6050 constants ----
 MPU_ADDR = 0x68
@@ -21,6 +23,7 @@ GYRO_SCALE = 131.0      # LSB/(°/s) for ±250°/s
 # ---- I2C init ----
 i2c = I2C(0, scl=Pin(20), sda=Pin(22), freq=400000)
 
+# ---- Accelerometer Functions ----
 def mpu_write(reg, data):
     i2c.writeto_mem(MPU_ADDR, reg, bytes([data]))
 
@@ -66,67 +69,6 @@ def read_accel_gyro():
     gz_dps = gz / GYRO_SCALE
     return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps)
 
-# ---- Simple Kalman filter for angle (angle + bias) ----
-class KalmanAngle:
-    def __init__(self, Q_angle=0.001, Q_bias=0.003, R_measure=0.03):
-        # Process noise variances
-        self.Q_angle = Q_angle
-        self.Q_bias = Q_bias
-        
-        # Measurement noise variance
-        self.R_measure = R_measure
-
-        # state
-        self.angle = 0.0
-        self.bias = 0.0
-
-        # error covariance matrix P (2x2)
-        self.P = [[0.0, 0.0],
-                  [0.0, 0.0]]
-
-    def set_angle(self, angle):
-        self.angle = angle
-
-    def get_angle(self, newRate, newAngle, dt):
-        # Predict
-        # Rate minus bias
-        rate = newRate - self.bias
-        self.angle += dt * rate
-
-        # Update covariance matrix P
-        # P = A * P * A^T + Q
-        # For our simple model:
-        
-        self.P[0][0] += dt * (dt*self.P[1][1] - self.P[0][1] - self.P[1][0] + self.Q_angle)
-        self.P[0][1] -= dt * self.P[1][1]
-        self.P[1][0] -= dt * self.P[1][1]
-        self.P[1][1] += self.Q_bias * dt
-
-        # Innovation
-        y = newAngle - self.angle
-
-        # Innovation covariance S
-        S = self.P[0][0] + self.R_measure
-
-        # Kalman gain K = P * H^T * S^-1
-        K0 = self.P[0][0] / S
-        K1 = self.P[1][0] / S
-
-        # Update state
-        self.angle += K0 * y
-        self.bias += K1 * y
-
-        # Update covariance P = (I - K*H) * P
-        P00_temp = self.P[0][0]
-        P01_temp = self.P[0][1]
-
-        self.P[0][0] -= K0 * P00_temp
-        self.P[0][1] -= K0 * P01_temp
-        self.P[1][0] -= K1 * P00_temp
-        self.P[1][1] -= K1 * P01_temp
-
-        return self.angle
-
 # ---- Utility: accel -> angles (degrees) ----
 def accel_to_pitch_roll(ax, ay, az):
     # pitch: rotation around X-axis: atan2(-ax, sqrt(ay^2 + az^2))
@@ -168,11 +110,15 @@ def main():
     gx_bias, gy_bias, gz_bias = calibrate_gyro(samples=300, delay_ms=5)
     
     # Create a PID controller instance
-    kp = .5
+    kp = .75
     ki = 0.1
     kd = 0.01
     pitch_pid = PID(kp, ki, kd)
     roll_pid = PID(kp, ki, kd)
+    
+    # init motor start positions
+    motor1 = Motor(300, 26)
+    motor2 = Motor(300, 25)
     
     # Create Kalman filters for pitch and roll
     # Tweak Q and R to taste: smaller R -> trusts accelerometer more (less smoothing),
@@ -185,10 +131,16 @@ def main():
     pitch, roll = accel_to_pitch_roll(ax, ay, az)
     kalman_pitch.set_angle(pitch)
     kalman_roll.set_angle(roll)
-
+    
+    last_pitch = 0
+    last_roll = 0
+    
     last_time = ticks_us()
     pitch_control_output = 0
     roll_control_output = 0
+    
+    proj_pitch_angle = 0
+    proj_roll_angle = 0
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
         now = ticks_us()
@@ -212,15 +164,29 @@ def main():
         roll_angle  = -1 * kalman_roll.get_angle(gy, a_roll, dt)
         
         # Calculate new projected angle
-        proj_pitch_angle = pitch_angle + pitch_control_output
-        proj_roll_angle = roll_angle + roll_control_output
+#         proj_pitch_angle = pitch_angle + pitch_control_output
+#         proj_roll_angle = roll_angle + roll_control_output
+        pitch_diff = pitch_angle - last_pitch
+        print("Pitch diff: ", pitch_diff)
+        proj_pitch_angle = proj_pitch_angle + pitch_angle + pitch_control_output
+        
+        roll_diff = roll_angle - last_roll
+        print("Roll diff: ", roll_diff)
+        proj_roll_angle = proj_roll_angle + roll_angle + roll_control_output
+            
         print("Projected Pitch: ", proj_pitch_angle)
         print("Projected Roll: ", proj_roll_angle)
+        
+        last_pitch = pitch_angle
+        last_roll = roll_angle
         
         # placeholder
         yaw_angle = 0
         pitch_control_output = pitch_pid.update(0, proj_pitch_angle)
         roll_control_output = roll_pid.update(0, proj_roll_angle)
+        motor1.move(pitch_control_output)
+        motor2.move(roll_control_output)
+        
         print("Pitch Angle  :{:+06.2f} | Roll Angle  :{:+06.2f}".format(pitch_angle, roll_angle))
         print("Pitch Control:{:+06.2f} | Roll Control:{:+06.2f}".format(pitch_control_output, roll_control_output))
        
