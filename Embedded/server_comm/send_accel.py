@@ -1,10 +1,8 @@
-import network
 from time import sleep
 import time
 import machine
 from machine import Pin, I2C, idle
 import socket
-import json
 import ds18x20
 import onewire
 import urequests
@@ -65,41 +63,38 @@ def send_packet(packet):
     r = urequests.post(SERVER, json=packet)
     print(r.text)
 
+def take_sample():
+  # Read accelerometer data
+  acc_x = read_raw_data(ACCEL_XOUT_H)
+  acc_y = read_raw_data(ACCEL_XOUT_H + 2)
+  acc_z = read_raw_data(ACCEL_XOUT_H + 4)
+
+  # Convert to 'g' and 'deg/s' (approx)
+  Ax = acc_x / 16384.0
+  Ay = acc_y / 16384.0
+  Az = acc_z / 16384.0
+  
+  temp = int(read_temp_data())
+  
+  packet.append({
+  "timestamp": time.gmtime(time.time()),
+  "accel_x": Ax,
+  "accel_y": Ay,
+  "accel_z": Az,
+  "temperature": temp
+  })
+  
+  print({
+  "timestamp": time.gmtime(time.time()),
+  "accel_x": Ax,
+  "accel_y": Ay,
+  "accel_z": Az,
+  "temperature": temp
+  })
+
 packet = []
 while True:
     for i in range(POINTS_PER_PACKET):
-        # Read accelerometer data
-        acc_x = read_raw_data(ACCEL_XOUT_H)
-        acc_y = read_raw_data(ACCEL_XOUT_H + 2)
-        acc_z = read_raw_data(ACCEL_XOUT_H + 4)
-
-        # Read gyroscope data
-        gyro_x = read_raw_data(GYRO_XOUT_H)
-        gyro_y = read_raw_data(GYRO_XOUT_H + 2)
-        gyro_z = read_raw_data(GYRO_XOUT_H + 4)
-
-        # Convert to 'g' and 'deg/s' (approx)
-        Ax = acc_x / 16384.0
-        Ay = acc_y / 16384.0
-        Az = acc_z / 16384.0
-        
-        temp = int(read_temp_data())
-        
-        packet.append({
-        "timestamp": time.gmtime(time.time()),
-        "accel_x": Ax,
-        "accel_y": Ay,
-        "accel_z": Az,
-        "temperature": temp
-        })
-        
-        print({
-        "timestamp": time.gmtime(time.time()),
-        "accel_x": Ax,
-        "accel_y": Ay,
-        "accel_z": Az,
-        "temperature": temp
-        })
         
         sleep(1/50)
         
