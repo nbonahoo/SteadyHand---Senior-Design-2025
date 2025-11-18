@@ -12,8 +12,7 @@ public partial class MainPage : ContentPage
 {
     private readonly DatabaseService _db;
 
-    // 🔧 Change this number to control how many points are shown
-    private const int SimplificationFactor = 10; // e.g., keep 1 in every 10 points
+    private const int SimplificationFactor = 10;
 
     public MainPage(DatabaseService db)
     {
@@ -28,11 +27,11 @@ public partial class MainPage : ContentPage
         await LoadChartsAsync();
     }
 
-    // ✅ Fetch and load data into charts
     private async Task LoadChartsAsync()
     {
         try
         {
+            // 🔥 FIX: This must already be List<SensorData>
             var sensorData = await _db.GetDataAsync();
 
             if (sensorData == null || sensorData.Count == 0)
@@ -43,10 +42,7 @@ public partial class MainPage : ContentPage
                 return;
             }
 
-            // Sort oldest → newest
             sensorData = sensorData.OrderBy(d => d.Timestamp).ToList();
-
-            // Simplify before plotting
             var simplified = SimplifyData(sensorData, SimplificationFactor);
 
             Graph1.Chart = CreateLineChart(GenerateShakinessData(simplified));
@@ -58,21 +54,18 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // ✅ Reduce dataset by taking every Nth point
     private List<SensorData> SimplifyData(List<SensorData> data, int step)
     {
-        if (data.Count <= 100) // don’t simplify small datasets
+        if (data.Count <= 100)
             return data;
 
         var result = new List<SensorData>();
         for (int i = 0; i < data.Count; i += step)
-        {
             result.Add(data[i]);
-        }
+
         return result;
     }
 
-    // ✅ Chart creation helper
     private LineChart CreateLineChart(ChartEntry[] entries) => new()
     {
         Entries = entries,
@@ -87,7 +80,6 @@ public partial class MainPage : ContentPage
         ValueLabelOrientation = Orientation.Horizontal
     };
 
-    // ✅ Hand shakiness chart (acceleration magnitude)
     private ChartEntry[] GenerateShakinessData(List<SensorData> data)
     {
         if (data.Count == 0) return Array.Empty<ChartEntry>();
@@ -114,7 +106,6 @@ public partial class MainPage : ContentPage
         }).ToArray();
     }
 
-    // ✅ Temperature chart
     private ChartEntry[] GenerateTemperatureData(List<SensorData> data)
     {
         if (data.Count == 0) return Array.Empty<ChartEntry>();
@@ -136,7 +127,6 @@ public partial class MainPage : ContentPage
         }).ToArray();
     }
 
-    // ✅ Timestamp formatter (handles Unix and ISO)
     private static string FormatTimestamp(string timestamp)
     {
         // Try Unix time first
@@ -145,46 +135,48 @@ public partial class MainPage : ContentPage
             try
             {
                 if (unix > 1_000_000_000_000)
-                    return DateTimeOffset.FromUnixTimeMilliseconds(unix).ToLocalTime().ToString("HH:mm");
+                    return DateTimeOffset.FromUnixTimeMilliseconds(unix)
+                        .ToLocalTime()
+                        .ToString("MM/dd/yyyy");
                 else if (unix > 1_000_000_000)
-                    return DateTimeOffset.FromUnixTimeSeconds(unix).ToLocalTime().ToString("HH:mm");
+                    return DateTimeOffset.FromUnixTimeSeconds(unix)
+                        .ToLocalTime()
+                        .ToString("MM/dd/yyyy");
             }
             catch { }
         }
 
         // ISO or SQL formats
         if (DateTime.TryParse(timestamp, out DateTime parsed))
-            return parsed.ToLocalTime().ToString("HH:mm");
+            return parsed.ToLocalTime().ToString("MM/dd");
+
 
         return timestamp;
     }
 
-    // ✅ Tap events open detail views (no change)
-    // ✅ Taps open detail pages with FULL DATA (not simplified)
+
     private async void OnShakinessTapped(object sender, EventArgs e)
     {
-        var fullData = await _db.GetDataAsync(); // full-resolution dataset
+        var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
 
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Shakiness Over Time",
-            GenerateShakinessData(fullData) // full dataset, no simplification
+            GenerateShakinessData(fullData)
         ));
     }
 
     private async void OnTemperatureTapped(object sender, EventArgs e)
     {
-        var fullData = await _db.GetDataAsync(); // full-resolution dataset
+        var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
 
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Temperature Over Time",
-            GenerateTemperatureData(fullData) // full dataset, no simplification
+            GenerateTemperatureData(fullData)
         ));
     }
 
-
-    // ✅ Auto-refresh on update
     private async void OnDataUpdated(List<SensorData> data)
     {
         await MainThread.InvokeOnMainThreadAsync(() =>
