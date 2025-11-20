@@ -185,20 +185,34 @@ public partial class MainPage : ContentPage
     {
         var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
+        var magnitudes = fullData.Select(d =>
+            Math.Sqrt(d.AccelX * d.AccelX + d.AccelY * d.AccelY + d.AccelZ * d.AccelZ)
+        ).ToArray();
+
+        var labels = fullData.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
+
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Shakiness Over Time",
-            null  // you can rewrite detail page later to use LiveCharts
+            magnitudes,
+            labels
         ));
+
+
     }
 
     private async void OnTemperatureTapped(object sender, EventArgs e)
     {
         var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
+        var temps = fullData.Select(d => (double)d.Temperature).ToArray();
+        var labels = fullData.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
+
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Temperature Over Time",
-            null
+            temps,
+            labels
         ));
+
     }
 
     private async void OnDataUpdated(List<SensorData> data)

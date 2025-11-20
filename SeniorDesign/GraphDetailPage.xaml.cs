@@ -1,134 +1,116 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using Microcharts;
-using Microcharts.Maui;
+﻿using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.SkiaSharpView.Maui;
 using Microsoft.Maui.Storage;
 using SkiaSharp;
-using System.Text;
 using System.Diagnostics;
+using System.Text;
 
 namespace SeniorDesign
 {
     public partial class GraphDetailPage : ContentPage
     {
-        private Chart _chart;
         private string _title;
-        private string _unitLabel; // <-- new: holds "Temperature (°C)" or "Acceleration (m/s²)"
+        private string _unitLabel;
+        private double[] _values;
+        private string[] _timestamps;
 
-        public GraphDetailPage(string title, IEnumerable<ChartEntry> entries)
+        public GraphDetailPage(string title, double[] values, string[] timestamps)
         {
             InitializeComponent();
 
             _title = title;
+            _values = values;
+            _timestamps = timestamps;
+
             GraphTitle.Text = title;
             NavigationPage.SetHasBackButton(this, true);
 
-            // ✅ Dynamically set Y-axis label and unit for export
+            // FIXED: set unit label
             if (title.ToLower().Contains("temperature"))
-            {
-                YAxisLabel.Text = "Temperature (°C)";
                 _unitLabel = "Temperature (°C)";
-            }
-            else if (title.ToLower().Contains("shakiness") || title.ToLower().Contains("acceleration"))
-            {
-                YAxisLabel.Text = "Acceleration (m/s²)";
-                _unitLabel = "Acceleration (m/s²)";
-            }
             else
-            {
-                YAxisLabel.Text = "Value";
-                _unitLabel = "Value";
-            }
+                _unitLabel = "Acceleration (m/s²)";
 
-            // ✅ Configure chart
-            DetailedGraph.Chart = new LineChart
-            {
-                Entries = entries,
-                LineMode = LineMode.Straight,
-                LineSize = 4,
-                PointMode = PointMode.Circle,
-                PointSize = 6,
-                LabelTextSize = 20,
-                LabelOrientation = Orientation.Horizontal,
-                ValueLabelOrientation = Orientation.Horizontal,
-                BackgroundColor = SKColors.White,
-                LabelColor = new SKColor(33, 33, 33),
-                IsAnimated = false
-
-            };
-
-            _chart = DetailedGraph.Chart;
+            LoadDetailChart();
         }
 
+        private void LoadDetailChart()
+        {
+            DetailChart.Series = new ISeries[]
+            {
+                new LineSeries<double>
+                {
+                    Values = _values,
+                    GeometrySize = 0,
+                    Stroke = new SolidColorPaint(SKColor.Parse("#1565C0"))
+                    {
+                        StrokeThickness = 3
+                    },
+                    Fill = null,
+                    LineSmoothness = 0
+                }
+            };
+
+            DetailChart.XAxes = new[]
+            {
+                new Axis
+                {
+                    Labels = _timestamps,
+                    TextSize = 14,
+                    Name = "Time"
+                }
+            };
+
+            DetailChart.YAxes = new[]
+            {
+                new Axis
+                {
+                    Name = _unitLabel,
+                    TextSize = 14
+                }
+            };
+        }
         private async void OnExportClicked(object sender, EventArgs e)
         {
             try
             {
-                // ⏳ Start timing
                 var stopwatch = Stopwatch.StartNew();
                 ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Gray;
                 ExportStatusLabel.Text = "Exporting data...";
 
-                IEnumerable<ChartEntry>? entries = null;
-
-                // ✅ Extract entries depending on chart type
-                switch (_chart)
-                {
-                    case LineChart lineChart:
-                        entries = lineChart.Entries;
-                        break;
-                    case BarChart barChart:
-                        entries = barChart.Entries;
-                        break;
-                    case PointChart pointChart:
-                        entries = pointChart.Entries;
-                        break;
-                    case DonutChart donutChart:
-                        entries = donutChart.Entries;
-                        break;
-                    case RadarChart radarChart:
-                        entries = radarChart.Entries;
-                        break;
-                    case RadialGaugeChart gaugeChart:
-                        entries = gaugeChart.Entries;
-                        break;
-                }
-
-                if (entries == null || !entries.Any())
+                if (_values == null || _values.Length == 0)
                 {
                     ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.OrangeRed;
-                    ExportStatusLabel.Text = " No data to export.";
+                    ExportStatusLabel.Text = "No data to export.";
                     await DisplayAlert("No Data", "There is no data to export.", "OK");
                     return;
                 }
 
-                // ✅ Create CSV with correct header
                 var csv = new StringBuilder();
                 csv.AppendLine($"Time,{_unitLabel}");
 
-                foreach (var entry in entries)
+                for (int i = 0; i < _values.Length; i++)
                 {
-                    string time = entry.Label?.Replace(",", " ") ?? "";
-                    string value = entry.Value.ToString();
+                    string time = _timestamps[i].Replace(",", " ");
+                    string value = _values[i].ToString();
                     csv.AppendLine($"{time},{value}");
                 }
 
-                // ✅ Save to file
                 string fileName = $"{_title.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
                 string filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 File.WriteAllText(filePath, csv.ToString());
 
-                // ✅ Share the file
                 await Share.Default.RequestAsync(new ShareFileRequest
                 {
                     Title = "Exported Graph Data",
                     File = new ShareFile(filePath)
                 });
 
-                // ✅ Done
                 stopwatch.Stop();
-                double seconds = stopwatch.Elapsed.TotalSeconds;
                 ExportStatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Green;
-                ExportStatusLabel.Text = $"Export complete in {seconds:F2} seconds at {DateTime.Now:hh:mm:ss tt}";
+                ExportStatusLabel.Text = $"Export complete in {stopwatch.Elapsed.TotalSeconds:F2}s";
             }
             catch (Exception ex)
             {
@@ -137,5 +119,6 @@ namespace SeniorDesign
                 await DisplayAlert("Export Failed", $"Error exporting CSV: {ex.Message}", "OK");
             }
         }
+
     }
 }

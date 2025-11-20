@@ -1,29 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
              x:Class="SeniorDesign.GraphDetailPage"
              BackgroundColor="#FAFAFA">
 
-    <!-- Accessible color palette -->
     <ContentPage.Resources>
         <Color x:Key="HeaderBlue">#0A3D91</Color>
         <Color x:Key="PrimaryBlue">#1565C0</Color>
         <Color x:Key="TextDark">#212121</Color>
-        <Color x:Key="PageBackground">#FAFAFA</Color>
         <Color x:Key="CardBackground">#FFFFFF</Color>
-        <Color x:Key="SecondaryBlue">#1E88E5</Color>
-        <Color x:Key="AccentBlueLight">#BBDEFB</Color>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-        <!-- ✅ HEADER -->
-        <Grid BackgroundColor="{StaticResource HeaderBlue}"
-              Padding="20,10"
-              Grid.Row="0"
-              HorizontalOptions="FillAndExpand"
-              VerticalOptions="Start">
+        <!-- HEADER -->
+        <Grid Grid.Row="0"
+              BackgroundColor="{StaticResource HeaderBlue}"
+              Padding="20,10">
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -34,9 +28,7 @@
                    TextColor="White"
                    FontAttributes="Bold"
                    FontSize="28"
-                   VerticalOptions="Center"
-                   LineBreakMode="TailTruncation"
-                   SemanticProperties.Description="Graph title for the selected dataset" />
+                   VerticalOptions="Center"/>
 
             <Button Text="Export Data"
                     Grid.Column="1"
@@ -46,87 +38,43 @@
                     FontSize="16"
                     CornerRadius="10"
                     Padding="12,6"
-                    HorizontalOptions="End"
-                    SemanticProperties.Description="Button to export this graph data to CSV or Excel file"
-                    Clicked="OnExportClicked" />
+                    Clicked="OnExportClicked"/>
         </Grid>
 
-        <!-- ✅ STATUS LABEL -->
+        <!-- STATUS TEXT -->
         <Label x:Name="ExportStatusLabel"
                Grid.Row="1"
-               Text=""
                FontSize="14"
                TextColor="{StaticResource TextDark}"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
-               Margin="0,4,0,0"
-               SemanticProperties.Description="Label that displays export status or completion time" />
+               HorizontalOptions="Center"/>
 
-        <!-- ✅ MAIN GRAPH SECTION -->
-        <ScrollView Grid.Row="2" Padding="16,20,16,16">
-            <VerticalStackLayout Spacing="20">
+        <!-- CHART -->
+        <ScrollView Grid.Row="2" Padding="16">
+            <Border Stroke="{StaticResource PrimaryBlue}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="{StaticResource CardBackground}">
 
-                <Border Stroke="{StaticResource PrimaryBlue}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 20"
-                        BackgroundColor="{StaticResource CardBackground}"
-                        SemanticProperties.Description="Detailed line chart display of selected data"
-                        Shadow="5,5,10,#33000000">
+                <VerticalStackLayout Padding="16">
+                    <lvc:CartesianChart x:Name="DetailChart"
+                                        HeightRequest="500"
+                                        LegendPosition="Hidden"
+                                        AnimationsSpeed="0:0:0" />
+                </VerticalStackLayout>
 
-                    <!-- Axis Labels Container -->
-                    <Grid RowDefinitions="Auto,* ,Auto"
-                          ColumnDefinitions="Auto,*"
-                          Padding="16">
-
-                        <!-- ✅ Y-Axis Label (dynamic) -->
-                        <Label x:Name="YAxisLabel"
-                               Text="Value"
-                               Grid.Row="1"
-                               Grid.Column="0"
-                               Rotation="270"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"
-                               TextColor="{StaticResource TextDark}"
-                               FontAttributes="Bold"
-                               FontSize="16"
-                               Margin="-50"
-                               SemanticProperties.Description="Y axis label" />
-
-                        <!-- Chart -->
-                        <charts:ChartView x:Name="DetailedGraph"
-                                          Grid.Row="1"
-                                          Grid.Column="1"
-                                          HeightRequest="350"
-                                          SemanticProperties.Description="Chart visualization of selected graph data" />
-
-                        <!-- X-Axis Label -->
-                        <Label Text="Time"
-                               Grid.Row="2"
-                               Grid.Column="1"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Start"
-                               TextColor="{StaticResource TextDark}"
-                               FontAttributes="Bold"
-                               FontSize="16"
-                               Margin="0,8,0,0"
-                               SemanticProperties.Description="X axis label" />
-                    </Grid>
-                </Border>
-            </VerticalStackLayout>
+            </Border>
         </ScrollView>
 
-        <!-- ✅ FOOTER -->
+        <!-- FOOTER -->
         <Grid Grid.Row="3"
               BackgroundColor="{StaticResource HeaderBlue}"
-              Padding="10,5"
-              HorizontalOptions="FillAndExpand">
-            <Label Text=" 2025 Steady Hand Project"
+              Padding="10,5">
+            <Label Text="2025 Steady Hand Project"
                    TextColor="White"
                    FontSize="12"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   SemanticProperties.Description="Footer text displaying copyright" />
+                   HorizontalOptions="Center"/>
         </Grid>
 
     </Grid>
+
 </ContentPage>
