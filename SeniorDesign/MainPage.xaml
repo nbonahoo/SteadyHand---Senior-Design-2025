@@ -33,16 +33,6 @@
                    FontSize="28"
                    VerticalOptions="Center"
                    SemanticProperties.Description="Application title: Steady Hand" />
-
-            <Button Text="Pair Bluetooth"
-                    TextColor="White"
-                    BackgroundColor="{StaticResource PrimaryBlue}"
-                    FontAttributes="Bold"
-                    FontSize="16"
-                    CornerRadius="8"
-                    Padding="12,6"
-                    Grid.Column="1"
-                    SemanticProperties.Description="Button to pair the utensil via Bluetooth" />
         </Grid>
 
         <!-- ✅ MAIN SCROLLABLE CONTENT -->

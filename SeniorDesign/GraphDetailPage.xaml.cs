@@ -51,7 +51,9 @@ namespace SeniorDesign
                 LabelOrientation = Orientation.Horizontal,
                 ValueLabelOrientation = Orientation.Horizontal,
                 BackgroundColor = SKColors.White,
-                LabelColor = new SKColor(33, 33, 33)
+                LabelColor = new SKColor(33, 33, 33),
+                IsAnimated = false
+
             };
 
             _chart = DetailedGraph.Chart;

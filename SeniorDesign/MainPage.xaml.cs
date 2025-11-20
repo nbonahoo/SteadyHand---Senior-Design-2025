@@ -77,7 +77,9 @@ public partial class MainPage : ContentPage
         BackgroundColor = SKColor.Parse("#FAFAFA"),
         LabelColor = SKColor.Parse("#212121"),
         LabelOrientation = Orientation.Horizontal,
-        ValueLabelOrientation = Orientation.Horizontal
+        ValueLabelOrientation = Orientation.Horizontal,
+        IsAnimated = false
+
     };
 
     private ChartEntry[] GenerateShakinessData(List<SensorData> data)
