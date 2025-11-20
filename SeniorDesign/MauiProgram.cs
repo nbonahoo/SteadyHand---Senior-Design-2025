@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LiveChartsCore.SkiaSharpView.Maui;
 using Microcharts.Maui;
+using Microsoft.Extensions.Logging;
 
 namespace SeniorDesign
 {
@@ -11,8 +12,10 @@ namespace SeniorDesign
 
             builder
                 .UseMauiApp<App>()
+                .UseLiveCharts()
+                .UseLiveCharts()
                 .UseMicrocharts(); // Enables Microcharts.MAUI support
-
+                
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

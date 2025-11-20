@@ -1,10 +1,8 @@
-﻿using Microcharts;
-using Microcharts.Maui;
+﻿using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.SkiaSharpView.Maui;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SeniorDesign;
 
@@ -31,7 +29,6 @@ public partial class MainPage : ContentPage
     {
         try
         {
-            // 🔥 FIX: This must already be List<SensorData>
             var sensorData = await _db.GetDataAsync();
 
             if (sensorData == null || sensorData.Count == 0)
@@ -45,8 +42,8 @@ public partial class MainPage : ContentPage
             sensorData = sensorData.OrderBy(d => d.Timestamp).ToList();
             var simplified = SimplifyData(sensorData, SimplificationFactor);
 
-            Graph1.Chart = CreateLineChart(GenerateShakinessData(simplified));
-            Graph2.Chart = CreateLineChart(GenerateTemperatureData(simplified));
+            LoadShakinessChart(simplified);
+            LoadTemperatureChart(simplified);
         }
         catch (Exception ex)
         {
@@ -66,72 +63,102 @@ public partial class MainPage : ContentPage
         return result;
     }
 
-    private LineChart CreateLineChart(ChartEntry[] entries) => new()
+    // -------------------------------------------------------
+    // 🔵 SHAKINESS GRAPH (LiveCharts2)
+    // -------------------------------------------------------
+    private void LoadShakinessChart(List<SensorData> data)
     {
-        Entries = entries,
-        LineMode = LineMode.Straight,
-        LineSize = 3,
-        PointMode = PointMode.Circle,
-        PointSize = 5,
-        LabelTextSize = 16,
-        BackgroundColor = SKColor.Parse("#FAFAFA"),
-        LabelColor = SKColor.Parse("#212121"),
-        LabelOrientation = Orientation.Horizontal,
-        ValueLabelOrientation = Orientation.Horizontal,
-        IsAnimated = false
+        var magnitudes = data.Select(d =>
+            Math.Sqrt(
+                d.AccelX * d.AccelX +
+                d.AccelY * d.AccelY +
+                d.AccelZ * d.AccelZ
+            )
+        ).ToArray();
 
-    };
+        var labels = data.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
 
-    private ChartEntry[] GenerateShakinessData(List<SensorData> data)
-    {
-        if (data.Count == 0) return Array.Empty<ChartEntry>();
-
-        data = data.OrderBy(d => d.Timestamp).ToList();
-        int labelStep = Math.Max(1, data.Count / 6);
-
-        return data.Select((d, i) =>
+        ShakinessChart.Series = new ISeries[]
         {
-            float magnitude = (float)Math.Sqrt(
-                Math.Pow(d.AccelX, 2) +
-                Math.Pow(d.AccelY, 2) +
-                Math.Pow(d.AccelZ, 2)
-            );
-
-            string formattedTime = FormatTimestamp(d.Timestamp);
-
-            return new ChartEntry(magnitude)
+            new LineSeries<double>
             {
-                Label = (i % labelStep == 0) ? formattedTime : "",
-                Color = SKColor.Parse("#1565C0"),
-                TextColor = SKColor.Parse("#212121")
-            };
-        }).ToArray();
+                Values = magnitudes,
+                GeometrySize = 0,
+                Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
+                Fill = null,
+                LineSmoothness = 0.0
+            }
+        };
+
+        ShakinessChart.XAxes = new[]
+        {
+            new Axis
+            {
+                Labels = labels,
+                LabelsRotation = 0,
+                TextSize = 12,
+                Name = "Time",
+                MinStep = 1
+            }
+        };
+
+        ShakinessChart.YAxes = new[]
+        {
+            new Axis
+            {
+                Name = "Acceleration (m/s²)",
+                TextSize = 12
+            }
+        };
     }
 
-    private ChartEntry[] GenerateTemperatureData(List<SensorData> data)
+    // -------------------------------------------------------
+    // 🔴 TEMPERATURE GRAPH (LiveCharts2)
+    // -------------------------------------------------------
+    private void LoadTemperatureChart(List<SensorData> data)
     {
-        if (data.Count == 0) return Array.Empty<ChartEntry>();
+        var temps = data.Select(d => (double)d.Temperature).ToArray();
+        var labels = data.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
 
-        data = data.OrderBy(d => d.Timestamp).ToList();
-        int labelStep = Math.Max(1, data.Count / 6);
-
-        return data.Select((d, i) =>
+        TemperatureChart.Series = new ISeries[]
         {
-            string formattedTime = FormatTimestamp(d.Timestamp);
-
-            return new ChartEntry(d.Temperature)
+            new LineSeries<double>
             {
-                Label = (i % labelStep == 0) ? formattedTime : "",
-                ValueLabel = "",
-                Color = SKColor.Parse("#1E88E5"),
-                TextColor = SKColor.Parse("#212121")
-            };
-        }).ToArray();
+                Values = temps,
+                GeometrySize = 0,
+                Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
+                Fill = null,
+                LineSmoothness = 0.0
+            }
+        };
+
+        TemperatureChart.XAxes = new[]
+        {
+            new Axis
+            {
+                Labels = labels,
+                LabelsRotation = 0,
+                TextSize = 12,
+                Name = "Time",
+                MinStep = 1
+            }
+        };
+
+        TemperatureChart.YAxes = new[]
+        {
+            new Axis
+            {
+                Name = "Temperature (°C)",
+                TextSize = 12
+            }
+        };
     }
 
+    // -------------------------------------------------------
+    // TIMESTAMP FORMATTER
+    // -------------------------------------------------------
     private static string FormatTimestamp(string timestamp)
     {
-        // Try Unix time first
         if (long.TryParse(timestamp, out long unix))
         {
             try
@@ -148,23 +175,19 @@ public partial class MainPage : ContentPage
             catch { }
         }
 
-        // ISO or SQL formats
         if (DateTime.TryParse(timestamp, out DateTime parsed))
             return parsed.ToLocalTime().ToString("MM/dd");
 
-
         return timestamp;
     }
-
 
     private async void OnShakinessTapped(object sender, EventArgs e)
     {
         var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
-
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Shakiness Over Time",
-            GenerateShakinessData(fullData)
+            null  // you can rewrite detail page later to use LiveCharts
         ));
     }
 
@@ -172,10 +195,9 @@ public partial class MainPage : ContentPage
     {
         var fullData = await _db.GetDataAsync();
         fullData = fullData.OrderBy(d => d.Timestamp).ToList();
-
         await Navigation.PushAsync(new GraphDetailPage(
             "Hand Temperature Over Time",
-            GenerateTemperatureData(fullData)
+            null
         ));
     }
 
@@ -184,8 +206,8 @@ public partial class MainPage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             data = SimplifyData(data.OrderBy(d => d.Timestamp).ToList(), SimplificationFactor);
-            Graph1.Chart = CreateLineChart(GenerateShakinessData(data));
-            Graph2.Chart = CreateLineChart(GenerateTemperatureData(data));
+            LoadShakinessChart(data);
+            LoadTemperatureChart(data);
         });
     }
 }

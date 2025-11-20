@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
              xmlns:charts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
              x:Class="SeniorDesign.MainPage"
              BackgroundColor="#FAFAFA">
@@ -54,32 +55,18 @@
                         <!-- Grid layout for Y-axis + chart + X-axis -->
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
                             <!-- Y Axis -->
-                            <Label Text="Acceleration (m/s²)"
-                                   Rotation="270"
-                                   VerticalOptions="Center"
-                                   HorizontalOptions="Center"
-                                   FontAttributes="Bold"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextDark}"
-                                   Margin="-50"
-                                   SemanticProperties.Description="Y axis label for acceleration" />
-
-                            <!-- Chart + X axis -->
+                                                       <!-- Chart + X axis -->
                             <VerticalStackLayout Grid.Column="1"
                                                  Spacing="8"
                                                  HorizontalOptions="FillAndExpand"
                                                  VerticalOptions="FillAndExpand">
-                                <charts:ChartView x:Name="Graph1"
-                                                  HeightRequest="250"
-                                                  HorizontalOptions="FillAndExpand"
-                                                  VerticalOptions="FillAndExpand"
-                                                  SemanticProperties.Description="Line chart of hand shakiness (acceleration)" />
-                                <Label Text="Time"
-                                       HorizontalOptions="Center"
-                                       FontAttributes="Bold"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextDark}"
-                                       SemanticProperties.Description="X axis label for time" />
+                                <lvc:CartesianChart x:Name="ShakinessChart"
+                                    Grid.Row="0"
+                                    HeightRequest="250"
+                                    LegendPosition="Hidden"
+                                    AnimationsSpeed="0:0:0"
+                                    SemanticProperties.Description="Accessible line chart of hand shakiness over time" />
+
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
@@ -96,40 +83,21 @@
                         BackgroundColor="{StaticResource CardBackground}"
                         SemanticProperties.Description="Hand temperature chart card">
                     <VerticalStackLayout Padding="20" Spacing="10">
-                        <Label Text="Hand Temperature Over Time"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource TextDark}" />
 
                         <!-- Grid layout for Y-axis + chart + X-axis -->
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
-                            <!-- Y Axis -->
-                            <Label Text="Temperature (°C)"
-                                   Rotation="270"
-                                   VerticalOptions="Center"
-                                   HorizontalOptions="Center"
-                                   FontAttributes="Bold"
-                                   FontSize="16"
-                                   TextColor="{StaticResource TextDark}"
-                                   Margin="-50"
-                                   SemanticProperties.Description="Y axis label for temperature" />
+                            
 
                             <!-- Chart + X axis -->
                             <VerticalStackLayout Grid.Column="1"
                                                  Spacing="8"
                                                  HorizontalOptions="FillAndExpand"
                                                  VerticalOptions="FillAndExpand">
-                                <charts:ChartView x:Name="Graph2"
-                                                  HeightRequest="250"
-                                                  HorizontalOptions="FillAndExpand"
-                                                  VerticalOptions="FillAndExpand"
-                                                  SemanticProperties.Description="Line chart of hand temperature" />
-                                <Label Text="Time"
-                                       HorizontalOptions="Center"
-                                       FontAttributes="Bold"
-                                       FontSize="16"
-                                       TextColor="{StaticResource TextDark}"
-                                       SemanticProperties.Description="X axis label for time" />
+                                <lvc:CartesianChart x:Name="TemperatureChart"
+                                    HeightRequest="250"
+                                    LegendPosition="Hidden"
+                                    AnimationsSpeed="0:0:0"
+                                    SemanticProperties.Description="Accessible line chart of hand temperature" />
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
