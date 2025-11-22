@@ -1,14 +1,41 @@
 ﻿<?xml version = "1.0" encoding = "UTF-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:SeniorDesign"
              x:Class="SeniorDesign.App">
+
     <Application.Resources>
         <ResourceDictionary>
+
+            <!-- Your existing merged dictionaries -->
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Global scaling factor controlled by A-/A+ buttons -->
+            <x:Double x:Key="FontScale">1.0</x:Double>
+
+            <!-- Base sizes (you can tweak these to taste) -->
+            <x:Double x:Key="BaseFontSmall">12</x:Double>
+            <x:Double x:Key="BaseFontNormal">16</x:Double>
+            <x:Double x:Key="BaseFontTitle">22</x:Double>
+            <x:Double x:Key="BaseFontHeader">28</x:Double>
+
+            <!-- Actual sizes used by controls (updated in App.xaml.cs) -->
+            <x:Double x:Key="SmallFontSize">12</x:Double>
+            <x:Double x:Key="BodyFontSize">16</x:Double>
+            <x:Double x:Key="TitleFontSize">22</x:Double>
+            <x:Double x:Key="HeaderFontSize">28</x:Double>
+
+            <!-- Global implicit styles -->
+            <Style TargetType="Label">
+                <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="FontSize" Value="{DynamicResource BodyFontSize}" />
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

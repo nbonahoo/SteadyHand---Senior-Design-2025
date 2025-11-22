@@ -7,7 +7,6 @@
              BackgroundColor="#FAFAFA">
 
     <ContentPage.Resources>
-        <!-- Accessible color palette -->
         <Color x:Key="HeaderBlue">#0A3D91</Color>
         <Color x:Key="PrimaryBlue">#1565C0</Color>
         <Color x:Key="TextDark">#212121</Color>
@@ -19,56 +18,79 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- ✅ HEADER BAR -->
+        <!-- HEADER -->
+        <!-- HEADER -->
         <Grid BackgroundColor="{StaticResource HeaderBlue}"
-              Padding="20,10"
-              Grid.Row="0">
+      Padding="20,10"
+      Grid.Row="0">
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
+            <!-- App Title -->
             <Label Text="Steady Hand"
-                   TextColor="White"
-                   FontAttributes="Bold"
-                   FontSize="28"
-                   VerticalOptions="Center"
-                   SemanticProperties.Description="Application title: Steady Hand" />
+           TextColor="White"
+           FontAttributes="Bold"
+           FontSize="{DynamicResource HeaderFontSize}"
+           VerticalOptions="Center"
+           Grid.Column="0" />
+
+            <!-- FONT BUTTONS -->
+            <HorizontalStackLayout Grid.Column="1"
+                           Spacing="10"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End">
+
+                <Button Text="A−"
+                    FontAttributes="Bold"
+                    Padding="12,4"
+                    HorizontalOptions="Start"
+                    Clicked="OnDecreaseFont"/>
+
+                <Button Text="A+"
+                    FontAttributes="Bold"
+                    Padding="12,4"
+                    HorizontalOptions="Start"
+                    Clicked="OnIncreaseFont"/>
+            </HorizontalStackLayout>
         </Grid>
 
-        <!-- ✅ MAIN SCROLLABLE CONTENT -->
+
+        <!-- MAIN CONTENT -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Padding="16" Spacing="20">
 
-                <!-- ✅ GRAPH 1: Hand Shakiness (Acceleration) -->
+                <!-- 🔵 GRAPH 1 -->
                 <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{StaticResource CardBackground}"
-                        SemanticProperties.Description="Hand shakiness chart card">
+                        BackgroundColor="{StaticResource CardBackground}">
                     <VerticalStackLayout Padding="20" Spacing="10">
+
+                        <!-- USE SCALED TITLE FONT -->
                         <Label Text="Hand Shakiness Over Time"
-                               FontSize="22"
+                               FontSize="{DynamicResource TitleFontSize}"
                                FontAttributes="Bold"
                                TextColor="{StaticResource TextDark}" />
 
-                        <!-- Grid layout for Y-axis + chart + X-axis -->
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
-                            <!-- Y Axis -->
-                                                       <!-- Chart + X axis -->
+
                             <VerticalStackLayout Grid.Column="1"
                                                  Spacing="8"
                                                  HorizontalOptions="FillAndExpand"
                                                  VerticalOptions="FillAndExpand">
+
                                 <lvc:CartesianChart x:Name="ShakinessChart"
-                                    Grid.Row="0"
                                     HeightRequest="250"
                                     LegendPosition="Hidden"
                                     AnimationsSpeed="0:0:0"
-                                    SemanticProperties.Description="Accessible line chart of hand shakiness over time" />
+                                    SemanticProperties.Description="Hand shakiness chart" />
 
                             </VerticalStackLayout>
                         </Grid>
+
                     </VerticalStackLayout>
 
                     <Border.GestureRecognizers>
@@ -76,46 +98,51 @@
                     </Border.GestureRecognizers>
                 </Border>
 
-                <!-- ✅ GRAPH 2: Hand Temperature -->
+                <!-- 🔴 GRAPH 2 -->
                 <Border Stroke="{StaticResource PrimaryBlue}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{StaticResource CardBackground}"
-                        SemanticProperties.Description="Hand temperature chart card">
+                        BackgroundColor="{StaticResource CardBackground}">
                     <VerticalStackLayout Padding="20" Spacing="10">
 
-                        <!-- Grid layout for Y-axis + chart + X-axis -->
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
-                            
 
-                            <!-- Chart + X axis -->
                             <VerticalStackLayout Grid.Column="1"
                                                  Spacing="8"
                                                  HorizontalOptions="FillAndExpand"
                                                  VerticalOptions="FillAndExpand">
+
                                 <lvc:CartesianChart x:Name="TemperatureChart"
                                     HeightRequest="250"
                                     LegendPosition="Hidden"
                                     AnimationsSpeed="0:0:0"
-                                    SemanticProperties.Description="Accessible line chart of hand temperature" />
+                                    SemanticProperties.Description="Temperature chart" />
+
                             </VerticalStackLayout>
                         </Grid>
+
                     </VerticalStackLayout>
 
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnTemperatureTapped" />
                     </Border.GestureRecognizers>
                 </Border>
+
+
+
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ✅ FOOTER -->
-        <Grid Grid.Row="2" BackgroundColor="{StaticResource HeaderBlue}" Padding="0,10">
+        <!-- FOOTER -->
+        <Grid Grid.Row="2"
+              BackgroundColor="{StaticResource HeaderBlue}"
+              Padding="0,10">
+
+            <!-- USE SCALED SMALL FONT -->
             <Label Text="2025 Steady Hand Project"
                    TextColor="White"
-                   FontSize="12"
-                   HorizontalOptions="Center"
-                   SemanticProperties.Description="Footer with project copyright" />
+                   FontSize="{DynamicResource SmallFontSize}"
+                   HorizontalOptions="Center" />
         </Grid>
 
     </Grid>

@@ -119,6 +119,27 @@ namespace SeniorDesign
                 await DisplayAlert("Export Failed", $"Error exporting CSV: {ex.Message}", "OK");
             }
         }
+        private void OnIncreaseFont(object sender, EventArgs e)
+        {
+            (App.Current as App).FontScale += 0.1;
+            ApplyTextScaling();
+        }
+
+        private void OnDecreaseFont(object sender, EventArgs e)
+        {
+            (App.Current as App).FontScale -= 0.1;
+            ApplyTextScaling();
+        }
+
+        private void ApplyTextScaling()
+        {
+            double scale = (App.Current as App).FontScale;
+
+            // Scale chart axis text
+            foreach (var axis in DetailChart.XAxes) axis.TextSize = (float)(12 * scale);
+            foreach (var axis in DetailChart.YAxes) axis.TextSize = (float)(12 * scale);
+        }
+
 
     }
 }

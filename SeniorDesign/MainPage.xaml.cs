@@ -1,7 +1,8 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Maui;
+using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.Maui;
 using SkiaSharp;
 
 namespace SeniorDesign;
@@ -110,6 +111,7 @@ public partial class MainPage : ContentPage
                 TextSize = 12
             }
         };
+        ApplyTextScaling();
     }
 
     // -------------------------------------------------------
@@ -152,6 +154,7 @@ public partial class MainPage : ContentPage
                 TextSize = 12
             }
         };
+        ApplyTextScaling();
     }
 
     // -------------------------------------------------------
@@ -224,4 +227,27 @@ public partial class MainPage : ContentPage
             LoadTemperatureChart(data);
         });
     }
+    private void OnIncreaseFont(object sender, EventArgs e)
+    {
+        (App.Current as App).FontScale += 0.1;
+        ApplyTextScaling();
+    }
+
+    private void OnDecreaseFont(object sender, EventArgs e)
+    {
+        (App.Current as App).FontScale -= 0.1;
+        ApplyTextScaling();
+    }
+    private void ApplyTextScaling()
+    {
+        double scale = (App.Current as App).FontScale;
+
+        // SCALE CHART AXES
+        foreach (var axis in ShakinessChart.XAxes) axis.TextSize = (float)(12 * scale);
+        foreach (var axis in ShakinessChart.YAxes) axis.TextSize = (float)(12 * scale);
+        foreach (var axis in TemperatureChart.XAxes) axis.TextSize = (float)(12 * scale);
+        foreach (var axis in TemperatureChart.YAxes) axis.TextSize = (float)(12 * scale);
+    }
+
+
 }

@@ -22,57 +22,89 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
+            <!-- GRAPH TITLE (scaled) -->
             <Label x:Name="GraphTitle"
                    TextColor="White"
                    FontAttributes="Bold"
-                   FontSize="28"
-                   VerticalOptions="Center"/>
+                   FontSize="{DynamicResource HeaderFontSize}"
+                   VerticalOptions="Center"
+                   Grid.Column="0" />
 
-            <Button Text="Export Data"
-                    Grid.Column="1"
-                    BackgroundColor="{StaticResource PrimaryBlue}"
-                    TextColor="White"
+            <!-- FONT SIZE BUTTONS -->
+            <HorizontalStackLayout Grid.Column="1"
+                                   Spacing="10"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="End">
+                <Button Text="A−"
                     FontAttributes="Bold"
-                    FontSize="16"
-                    CornerRadius="10"
-                    Padding="12,6"
-                    Clicked="OnExportClicked"/>
+                    Padding="12,4"
+                    HorizontalOptions="Start"
+                    Clicked="OnDecreaseFont"/>
+
+                <Button Text="A+"
+                    FontAttributes="Bold"
+                    Padding="12,4"
+                    HorizontalOptions="Start"
+                    Clicked="OnIncreaseFont"/>
+
+            </HorizontalStackLayout>
+
+            <!-- EXPORT BUTTON -->
+
         </Grid>
 
-        <!-- STATUS TEXT -->
+        <!-- STATUS TEXT (scaled body font) -->
         <Label x:Name="ExportStatusLabel"
                Grid.Row="1"
-               FontSize="14"
+               FontSize="{DynamicResource BodyFontSize}"
                TextColor="{StaticResource TextDark}"
-               HorizontalOptions="Center"/>
+               HorizontalOptions="Center" />
 
         <!-- CHART -->
+        <!-- SCROLLABLE AREA (chart + export button inside together) -->
         <ScrollView Grid.Row="2" Padding="16">
-            <Border Stroke="{StaticResource PrimaryBlue}"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 20"
-                    BackgroundColor="{StaticResource CardBackground}">
 
-                <VerticalStackLayout Padding="16">
-                    <lvc:CartesianChart x:Name="DetailChart"
-                                        HeightRequest="500"
-                                        LegendPosition="Hidden"
-                                        AnimationsSpeed="0:0:0" />
-                </VerticalStackLayout>
+            <VerticalStackLayout Spacing="20">
 
-            </Border>
+                <!-- CHART CARD -->
+                <Border Stroke="{StaticResource PrimaryBlue}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 20"
+                BackgroundColor="{StaticResource CardBackground}">
+                    <VerticalStackLayout Padding="16">
+                        <lvc:CartesianChart x:Name="DetailChart"
+                                    HeightRequest="500"
+                                    LegendPosition="Hidden"
+                                    AnimationsSpeed="0:0:0" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- EXPORT BUTTON UNDER CHART -->
+                <Button Text="Export Data"
+                BackgroundColor="{StaticResource PrimaryBlue}"
+                TextColor="White"
+                FontAttributes="Bold"
+                FontSize="{DynamicResource BodyFontSize}"
+                CornerRadius="10"
+                Padding="16,8"
+                HorizontalOptions="Center"
+                Clicked="OnExportClicked"/>
+            </VerticalStackLayout>
+
         </ScrollView>
 
-        <!-- FOOTER -->
+
+        <!-- FOOTER (scaled small font) -->
         <Grid Grid.Row="3"
               BackgroundColor="{StaticResource HeaderBlue}"
               Padding="10,5">
             <Label Text="2025 Steady Hand Project"
                    TextColor="White"
-                   FontSize="12"
-                   HorizontalOptions="Center"/>
+                   FontSize="{DynamicResource SmallFontSize}"
+                   HorizontalOptions="Center" />
         </Grid>
 
     </Grid>
