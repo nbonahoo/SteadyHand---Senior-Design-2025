@@ -12,8 +12,6 @@
         <Color x:Key="TextDark">#212121</Color>
         <Color x:Key="PageBackground">#FAFAFA</Color>
         <Color x:Key="CardBackground">#FFFFFF</Color>
-        <Color x:Key="SecondaryBlue">#1E88E5</Color>
-        <Color x:Key="AccentBlueLight">#BBDEFB</Color>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto">
