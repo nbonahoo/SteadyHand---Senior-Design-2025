@@ -19,9 +19,10 @@ class Motor:
         self.pmA.freq(frequency)
         sleep_ms(10)
         self.pmA.duty(0)
+        self.pmA.freq(1)
         
     def get_freq(self, angle):
-        if angle <= 0:
+        if angle < 0:
             ratio = (angle) / 90
             freq = (ratio * 300 ) + 600
             freq = round(freq)
@@ -29,10 +30,11 @@ class Motor:
             ratio = angle / 90
             freq = (ratio * 400) + 600
             freq = round(freq)
+        elif angle == 0:
+            freq = 1
         if freq < 1000 and freq > 300:
             if abs(self.freq_last - freq) > 8:
                     self.freq_last = freq
-        print(freq)
         return freq
     
     
