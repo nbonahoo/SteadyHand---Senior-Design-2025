@@ -4,9 +4,14 @@ from machine import I2C
 from time import sleep
 
 global pmA1
-pA1 = Pin(4)
+pA1 = Pin(26)
 pmA1= machine.PWM(pA1)
 pmA1.duty(512)
+
+global pmA2
+pA2 = Pin(25)
+pmA2 = machine.PWM(pA2)
+pmA2.duty(512)
 # pmA0.freq(300)
 
 def move(frequency):
@@ -15,21 +20,31 @@ def move(frequency):
     pmA1.freq(frequency)
     sleep(0.25)
     pmA1.duty(0)
+
+def move2(frequency):
+    global pmA2
+    pmA2.duty(512)
+    pmA2.freq(frequency)
+    sleep(0.25)
+    pmA2.duty(0)
     
 
 def main():
-    for i in range(1000, 300, -50):
+#     move2(1)
+    for i in range(700, 300, -10):
         print(i)
         move(i)
         
-    for n in range(300, 1000, 50):
-        print(n)
-        move(n)
-    
+#     for n in range(300, 1000, 10):
+#         print(n)
+#         move(n)
     # Final position
-#     move(10000)
+#     move(200)
+#     sleep(0.5)
+#     move(400)
     sleep(0.5)
-    move(600)
+    move(300)
+
 
 if __name__ == "__main__":
     main()

@@ -117,8 +117,9 @@ def main():
     roll_pid = PID(kp, ki, kd)
     
     # init motor start positions
-    motor1 = Motor(300, 26)
-    motor2 = Motor(300, 25)
+    # init motor : Motor(start frequency, Pin number, High cutoff frequency, Low cutoff frequency)
+    motor_pitch = Motor(300, 26, 700, 300)
+    motor_roll = Motor(300, 25, 400, 200)
     
     # Create Kalman filters for pitch and roll
     # Tweak Q and R to taste: smaller R -> trusts accelerometer more (less smoothing),
@@ -155,28 +156,25 @@ def main():
         gx = gx_raw - gx_bias
         gy = gy_raw - gy_bias
         gz = gz_raw - gz_bias
-
+        
+#         now1 = ticks_us()
+        
         # compute accelerometer angles
         a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
 
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
-        pitch_angle = kalman_pitch.get_angle(gx, a_pitch, dt)
-        roll_angle  = -1 * kalman_roll.get_angle(gy, a_roll, dt)
+        pitch_angle = -1*kalman_pitch.get_angle(gx, a_pitch, dt)
+        roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
         
         # Calculate new projected angle
 #         proj_pitch_angle = pitch_angle + pitch_control_output
 #         proj_roll_angle = roll_angle + roll_control_output
         pitch_diff = pitch_angle - last_pitch
-        print("Pitch diff: ", pitch_diff)
         proj_pitch_angle = proj_pitch_angle + pitch_angle + pitch_control_output
         
         roll_diff = roll_angle - last_roll
-        print("Roll diff: ", roll_diff)
         proj_roll_angle = proj_roll_angle + roll_angle + roll_control_output
             
-        print("Projected Pitch: ", proj_pitch_angle)
-        print("Projected Roll: ", proj_roll_angle)
-        
         last_pitch = pitch_angle
         last_roll = roll_angle
         
@@ -184,14 +182,26 @@ def main():
         yaw_angle = 0
         pitch_control_output = pitch_pid.update(0, proj_pitch_angle)
         roll_control_output = roll_pid.update(0, proj_roll_angle)
-        motor1.move(pitch_control_output)
-        motor2.move(roll_control_output)
+        
+        # move pitch
+        motor_roll.move(0)
+        motor_pitch.move(pitch_control_output)
+        
+#         sleep_ms(10)
+        
+        # move roll
+        motor_roll.move(roll_control_output)
+        motor_pitch.move(0)
+        
+#         now2 = ticks_us()
+#         dt = ticks_diff(now2, now1) / 1000000.0  # seconds
+#         print("DT: ",dt)
         
         print("Pitch Angle  :{:+06.2f} | Roll Angle  :{:+06.2f}".format(pitch_angle, roll_angle))
         print("Pitch Control:{:+06.2f} | Roll Control:{:+06.2f}".format(pitch_control_output, roll_control_output))
        
        # adjust sleep to control update rate; loop timing dominated by i2c read
-        sleep_ms(10)
+#         sleep_ms(10)
 
 if __name__ == "__main__":
     main()
