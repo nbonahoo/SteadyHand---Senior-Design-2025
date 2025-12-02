@@ -117,8 +117,9 @@ def main():
     roll_pid = PID(kp, ki, kd)
     
     # init motor start positions
-    motor_pitch = Motor(300, 26)
-    motor_roll = Motor(300, 25)
+    # init motor : Motor(start frequency, Pin number, High cutoff frequency, Low cutoff frequency)
+    motor_pitch = Motor(300, 26, 700, 300)
+    motor_roll = Motor(300, 25, 400, 200)
     
     # Create Kalman filters for pitch and roll
     # Tweak Q and R to taste: smaller R -> trusts accelerometer more (less smoothing),
