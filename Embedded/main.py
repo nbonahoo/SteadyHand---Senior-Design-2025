@@ -5,6 +5,9 @@ import math
 from motor import Motor
 from PID import PID
 from kalmanFilter import *
+from wifi import *
+import ds18x20
+import onewire
 
 # ---- MPU-6050 constants ----
 MPU_ADDR = 0x68
@@ -22,6 +25,12 @@ GYRO_SCALE = 131.0      # LSB/(°/s) for ±250°/s
 
 # ---- I2C init ----
 i2c = I2C(0, scl=Pin(20), sda=Pin(22), freq=400000)
+
+# ---- Temperature Pin Set up ----
+def temp_init():
+    ds_pin = machine.Pin(13)
+    ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
+    roms = ds_sensor.scan()
 
 # ---- Accelerometer Functions ----
 def mpu_write(reg, data):
@@ -69,6 +78,11 @@ def read_accel_gyro():
     gz_dps = gz / GYRO_SCALE
     return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps)
 
+def read_temp_data():
+    ds_sensor.convert_temp()
+    for rom in roms:
+        return(ds_sensor.read_temp(rom))
+    
 # ---- Utility: accel -> angles (degrees) ----
 def accel_to_pitch_roll(ax, ay, az):
     # pitch: rotation around X-axis: atan2(-ax, sqrt(ay^2 + az^2))
@@ -99,10 +113,15 @@ def calibrate_gyro(samples=200, delay_ms=5):
 def main():
     try:
         mpu_init()
+        temp_init()
     except Exception as e:
         print("MPU init failed:", e)
         return
 
+    # disconnect and reconnect to the wifi
+    do_disconnect()
+    do_connect()
+    
     # warm up read
     sleep_ms(100)
     

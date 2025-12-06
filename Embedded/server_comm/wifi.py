@@ -1,11 +1,11 @@
 import network
 import machine
-
+import time
 # ssid = "Jordan iPhone"
 # password = "wifiwifiwifi"
 
-ssid = "Jordan iPhone"
-password = "wifiwifiwifi"
+ssid = "ATTRyAVNmS"
+password = "t8dz3fbseyfh"
 
 def do_connect():
 
@@ -35,4 +35,7 @@ def do_disconnect():
         print("No active Wi-Fi connection found.")
 
 do_disconnect()
+ts = time.time()
 do_connect()
+# print(f"WiFi connection took {(time.time_ns() - ts)/1000000} milliseconds")
+print(f"WiFi connection took {(time.time() - ts)} seconds")

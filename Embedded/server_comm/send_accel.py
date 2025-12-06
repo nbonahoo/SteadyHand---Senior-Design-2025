@@ -6,9 +6,13 @@ import socket
 import ds18x20
 import onewire
 import urequests
+import ntptime
+import network
 
-ssid = "Jordan iPhone"
-password = "wifiwifiwifi"
+# ssid = "Jordan iPhone"
+# password = "wifiwifiwifi"
+ssid = "ATTRyAVNmS"
+password = "t8dz3fbseyfh"
 DEST_IP = "172.20.10.4"
 DEST_PORT = 5001
 SERVER = "https://steadyhand-server.onrender.com/upload"
@@ -45,7 +49,7 @@ ds_pin = machine.Pin(13)
 ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
 roms = ds_sensor.scan()
 
-POINTS_PER_PACKET = 50 # 3 seconds of 50hz samplings
+POINTS_PER_PACKET = 100 # 3 seconds of 50hz samplings
 
 def read_raw_data(addr):
     high, low = i2c.readfrom_mem(MPU6050_ADDR, addr, 2)
@@ -60,43 +64,52 @@ def read_temp_data():
         return(ds_sensor.read_temp(rom))
     
 def send_packet(packet):
-    r = urequests.post(SERVER, json=packet)
-    print(r.text)
+    try:
+        r = urequests.post(SERVER, json=packet)
+        print("Status:", r.status_code)
+        print("Body:", r.text)
+    except Exception as e:
+        print("Request failed:", e)
+    finally:
+        try:
+            r.close()
+        except:
+            pass
 
-def take_sample():
+def sync_time():
+    ntptime.host = "pool.ntp.org"
+    ntptime.settime()  # sets internal RTC to UTC
+    
+def take_sample(samples, temp):
   # Read accelerometer data
   acc_x = read_raw_data(ACCEL_XOUT_H)
   acc_y = read_raw_data(ACCEL_XOUT_H + 2)
   acc_z = read_raw_data(ACCEL_XOUT_H + 4)
 
-  # Convert to 'g' and 'deg/s' (approx)
-  Ax = acc_x / 16384.0
-  Ay = acc_y / 16384.0
-  Az = acc_z / 16384.0
-  
-  temp = int(read_temp_data())
-  
-  packet.append({
-  "timestamp": time.gmtime(time.time()),
-  "accel_x": Ax,
-  "accel_y": Ay,
-  "accel_z": Az,
-  "temperature": temp
-  })
-  
-  print({
-  "timestamp": time.gmtime(time.time()),
-  "accel_x": Ax,
-  "accel_y": Ay,
-  "accel_z": Az,
-  "temperature": temp
-  })
+  samples.append([acc_x, acc_y, acc_z, temp])
 
-packet = []
+sync_time()
+print('hey')
+
 while True:
+    packet = {}
+    samples = []
+    ts = int(time.time_ns())
+    temp = read_temp_data()
+    print(f"temp sensor took {(time.time_ns() - ts) / 1000000} milliseconds")
+    ts = int(time.time())
+    ts_ns = int(time.time_ns())
     for i in range(POINTS_PER_PACKET):
+        take_sample(samples, temp)    
         
-        sleep(1/50)
-        
+        packet = {
+            "timestamp" : ts,
+            "samples" : samples,
+        }
+
+    print(f"Sampling took {(time.time_ns() - ts_ns) / 1000000} milliseconds")
+    print("packet created and about to send")
+    ts = int(time.time_ns())
     send_packet(packet)
-    packet = []
+    print(f"This packet took {(time.time_ns() - ts) / 1000000} milliseconds")
+    
