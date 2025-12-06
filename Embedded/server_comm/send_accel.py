@@ -63,40 +63,41 @@ def send_packet(packet):
     r = urequests.post(SERVER, json=packet)
     print(r.text)
 
-def take_sample():
+def take_sample(Ax, Ay, Az, packet):
   # Read accelerometer data
-  acc_x = read_raw_data(ACCEL_XOUT_H)
-  acc_y = read_raw_data(ACCEL_XOUT_H + 2)
-  acc_z = read_raw_data(ACCEL_XOUT_H + 4)
+#   acc_x = read_raw_data(ACCEL_XOUT_H)
+#   acc_y = read_raw_data(ACCEL_XOUT_H + 2)
+#   acc_z = read_raw_data(ACCEL_XOUT_H + 4)
+# 
+#   # Convert to 'g' and 'deg/s' (approx)
+#   Ax = acc_x / 16384.0
+#   Ay = acc_y / 16384.0
+#   Az = acc_z / 16384.0
+  
+    temp = int(read_temp_data())
 
-  # Convert to 'g' and 'deg/s' (approx)
-  Ax = acc_x / 16384.0
-  Ay = acc_y / 16384.0
-  Az = acc_z / 16384.0
-  
-  temp = int(read_temp_data())
-  
-  packet.append({
-  "timestamp": time.gmtime(time.time()),
-  "accel_x": Ax,
-  "accel_y": Ay,
-  "accel_z": Az,
-  "temperature": temp
-  })
-  
-  print({
-  "timestamp": time.gmtime(time.time()),
-  "accel_x": Ax,
-  "accel_y": Ay,
-  "accel_z": Az,
-  "temperature": temp
-  })
+    packet.append({
+    "timestamp": time.gmtime(time.time()),
+    "accel_x": Ax,
+    "accel_y": Ay,
+    "accel_z": Az,
+    "temperature": temp
+    })
 
-packet = []
-while True:
-    for i in range(POINTS_PER_PACKET):
-        
-        sleep(1/50)
-        
-    send_packet(packet)
-    packet = []
+    print({
+    "timestamp": time.gmtime(time.time()),
+    "accel_x": Ax,
+    "accel_y": Ay,
+    "accel_z": Az,
+    "temperature": temp
+    })
+    return packet
+
+# packet = []
+# while True:
+#     for i in range(POINTS_PER_PACKET):
+#         
+#         sleep(1/50)
+#         
+#     send_packet(packet)
+#     packet = []

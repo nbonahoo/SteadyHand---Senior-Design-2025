@@ -1,10 +1,23 @@
 import machine
 from machine import Pin, I2C
+import time
 from time import sleep_ms, ticks_us, ticks_diff
 import math
+import socket
 from motor import Motor
 from PID import PID
 from kalmanFilter import *
+from send_accel import *
+from wifi import *
+
+# INTERNET SETUP
+ssid = "Jordan iPhone"
+password = "wifiwifiwifi"
+DEST_IP = "172.20.10.4"
+DEST_PORT = 5001
+SERVER = "https://steadyhand-server.onrender.com/upload"
+do_connect()
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # ---- MPU-6050 constants ----
 MPU_ADDR = 0x68
@@ -142,6 +155,8 @@ def main():
     
     proj_pitch_angle = 0
     proj_roll_angle = 0
+    packet = []
+    samps = 0
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
         now = ticks_us()
@@ -151,24 +166,30 @@ def main():
         last_time = now
 
         ax, ay, az, gx_raw, gy_raw, gz_raw = read_accel_gyro()
-
+        
+        packet = take_sample(ax, ay, az, packet)
+        if samps == 50:
+            send_packet(packet)
+            packet = []
+            samps = 0
+        samps += 1
+        print("Sample Number ", samps)
+        
         # subtract calibration biases from gyro readings
         gx = gx_raw - gx_bias
         gy = gy_raw - gy_bias
         gz = gz_raw - gz_bias
         
-#         now1 = ticks_us()
-        
         # compute accelerometer angles
         a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
 
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
-        pitch_angle = -1*kalman_pitch.get_angle(gx, a_pitch, dt)
+        pitch_angle = kalman_pitch.get_angle(gx, a_pitch, dt)
         roll_angle  = kalman_roll.get_angle(gy, a_roll, dt)
         
         # Calculate new projected angle
-#         proj_pitch_angle = pitch_angle + pitch_control_output
-#         proj_roll_angle = roll_angle + roll_control_output
+        # proj_pitch_angle = pitch_angle + pitch_control_output
+        # proj_roll_angle = roll_angle + roll_control_output
         pitch_diff = pitch_angle - last_pitch
         proj_pitch_angle = proj_pitch_angle + pitch_angle + pitch_control_output
         
@@ -178,30 +199,25 @@ def main():
         last_pitch = pitch_angle
         last_roll = roll_angle
         
-        # placeholder
-        yaw_angle = 0
+        # Update control values to PID controller output
         pitch_control_output = pitch_pid.update(0, proj_pitch_angle)
         roll_control_output = roll_pid.update(0, proj_roll_angle)
         
         # move pitch
-        motor_roll.move(0)
+#         motor_roll.move(0)
         motor_pitch.move(pitch_control_output)
         
-#         sleep_ms(10)
+        sleep_ms(10)
         
         # move roll
+#         motor_pitch.move(0)
         motor_roll.move(roll_control_output)
-        motor_pitch.move(0)
-        
-#         now2 = ticks_us()
-#         dt = ticks_diff(now2, now1) / 1000000.0  # seconds
-#         print("DT: ",dt)
         
         print("Pitch Angle  :{:+06.2f} | Roll Angle  :{:+06.2f}".format(pitch_angle, roll_angle))
         print("Pitch Control:{:+06.2f} | Roll Control:{:+06.2f}".format(pitch_control_output, roll_control_output))
        
        # adjust sleep to control update rate; loop timing dominated by i2c read
-#         sleep_ms(10)
+        sleep_ms(100)
 
 if __name__ == "__main__":
     main()

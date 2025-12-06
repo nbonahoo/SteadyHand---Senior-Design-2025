@@ -18,18 +18,20 @@ class Motor:
     
     def move(self, angle):
         frequency = self.get_freq(angle)
-        self.pmA.duty(512)
-        self.pmA.freq(frequency)
-        sleep_ms(10)
-        self.pmA.duty(0)
-        self.pmA.freq(1)
+        print("Frequency: ", frequency)
+        if frequency > 0:
+            self.pmA.duty(512)
+            self.pmA.freq(frequency)
+            sleep_ms(10)
+            self.pmA.duty(0)
+#             self.pmA.freq(1)
         
     def get_freq(self, angle):
         if (angle < -30) or (angle > 30):
-            return 1 # return no movement if the angle is too high
+            return 0 # return no movement if the angle is too high
         
         angle = angle + 30 # make all angles positive (-30 to 30) now (0 to 60)
-        print("adj angle: ", angle)
+        # print("adj angle: ", angle)
         ratio = (angle) / 60
         freq = (ratio * self.cutoff_diff ) + self.cutoff_low
         freq = round(freq)
@@ -37,7 +39,7 @@ class Motor:
             self.freq_last = freq
             return freq
         else:
-            return 1
+            return 0
         
         
         
