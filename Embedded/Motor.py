@@ -22,8 +22,8 @@ class Motor:
         if frequency > 0:
             self.pmA.duty(512)
             self.pmA.freq(frequency)
-            sleep_ms(10)
-            self.pmA.duty(0)
+            sleep_ms(25)
+#             self.pmA.duty(0)
 #             self.pmA.freq(1)
         
     def get_freq(self, angle):
