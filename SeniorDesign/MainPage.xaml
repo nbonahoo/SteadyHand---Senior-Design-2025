@@ -102,6 +102,10 @@
                         StrokeShape="RoundRectangle 16"
                         BackgroundColor="{StaticResource CardBackground}">
                     <VerticalStackLayout Padding="20" Spacing="10">
+                        <Label Text="Hand Temperature Over Time"
+                               FontSize="{DynamicResource TitleFontSize}"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextDark}" />
 
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
 

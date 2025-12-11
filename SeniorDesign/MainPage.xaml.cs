@@ -69,93 +69,93 @@ public partial class MainPage : ContentPage
     // -------------------------------------------------------
     private void LoadShakinessChart(List<SensorData> data)
     {
-        var magnitudes = data.Select(d =>
-            Math.Sqrt(
-                d.AccelX * d.AccelX +
-                d.AccelY * d.AccelY +
-                d.AccelZ * d.AccelZ
-            )
+        var reversed = data.AsEnumerable().Reverse().ToList();
+
+        var magnitudes = reversed.Select(d =>
+            Math.Sqrt(d.AccelX * d.AccelX +
+                      d.AccelY * d.AccelY +
+                      d.AccelZ * d.AccelZ)
         ).ToArray();
 
-        var labels = data.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
+        var labels = reversed.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
 
         ShakinessChart.Series = new ISeries[]
         {
-            new LineSeries<double>
-            {
-                Values = magnitudes,
-                GeometrySize = 0,
-                Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
-                Fill = null,
-                LineSmoothness = 0.0
-            }
+        new LineSeries<double>
+        {
+            Values = magnitudes,
+            GeometrySize = 0,
+            Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
+            Fill = null,
+            LineSmoothness = 0.0
+        }
         };
 
         ShakinessChart.XAxes = new[]
         {
-            new Axis
-            {
-                Labels = labels,
-                LabelsRotation = 0,
-                TextSize = 12,
-                Name = "Time",
-                MinStep = 1
-            }
-        };
+        new Axis
+        {
+            Labels = labels,
+            Name = "Date",
+            TextSize = 12,
+            MinStep = 1
+        }
+    };
 
         ShakinessChart.YAxes = new[]
         {
-            new Axis
-            {
-                Name = "Acceleration (m/s²)",
-                TextSize = 12
-            }
-        };
-        ApplyTextScaling();
+        new Axis
+        {
+            Name = "Acceleration (m/s²)",
+            TextSize = 12
+        }
+    };
     }
+
 
     // -------------------------------------------------------
     // 🔴 TEMPERATURE GRAPH (LiveCharts2)
     // -------------------------------------------------------
     private void LoadTemperatureChart(List<SensorData> data)
     {
-        var temps = data.Select(d => (double)d.Temperature).ToArray();
-        var labels = data.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
+        var reversed = data.AsEnumerable().Reverse().ToList();
+
+        var temps = reversed.Select(d => (double)d.Temperature).ToArray();
+        var labels = reversed.Select(d => FormatTimestamp(d.Timestamp)).ToArray();
 
         TemperatureChart.Series = new ISeries[]
         {
-            new LineSeries<double>
-            {
-                Values = temps,
-                GeometrySize = 0,
-                Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
-                Fill = null,
-                LineSmoothness = 0.0
-            }
+        new LineSeries<double>
+        {
+            Values = temps,
+            GeometrySize = 0,
+            Stroke = new SolidColorPaint(SKColor.Parse("#1565C0")) { StrokeThickness = 3 },
+            Fill = null,
+            LineSmoothness = 0.0
+        }
         };
 
         TemperatureChart.XAxes = new[]
         {
-            new Axis
-            {
-                Labels = labels,
-                LabelsRotation = 0,
-                TextSize = 12,
-                Name = "Time",
-                MinStep = 1
-            }
-        };
+        new Axis
+        {
+            Labels = labels,
+            Name = "Date",
+            TextSize = 12,
+            MinStep = 1
+        }
+    };
 
         TemperatureChart.YAxes = new[]
         {
-            new Axis
-            {
-                Name = "Temperature (°C)",
-                TextSize = 12
-            }
-        };
-        ApplyTextScaling();
+        new Axis
+        {
+            Name = "Temperature (°C)",
+            TextSize = 12
+        }
+    };
     }
+
 
     // -------------------------------------------------------
     // TIMESTAMP FORMATTER
@@ -222,11 +222,18 @@ public partial class MainPage : ContentPage
     {
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            data = SimplifyData(data.OrderBy(d => d.Timestamp).ToList(), SimplificationFactor);
-            LoadShakinessChart(data);
-            LoadTemperatureChart(data);
+            // Sort oldest → newest so newest appears on the RIGHT
+            var sorted = data.OrderBy(d => d.Timestamp).ToList();
+
+
+            var simplified = SimplifyData(sorted, SimplificationFactor);
+
+            LoadShakinessChart(simplified);
+            LoadTemperatureChart(simplified);
         });
     }
+
+
     private void OnIncreaseFont(object sender, EventArgs e)
     {
         (App.Current as App).FontScale += 0.1;
