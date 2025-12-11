@@ -1,10 +1,14 @@
 import machine
 from machine import Pin, I2C
+import time
 from time import sleep_ms, ticks_us, ticks_diff
 import math
+import socket
 from motor import Motor
 from PID import PID
 from kalmanFilter import *
+from send_accel import *
+from wifi import *
 
 # ---- MPU-6050 constants ----
 MPU_ADDR = 0x68
@@ -61,13 +65,13 @@ def read_accel_gyro():
     gy = read_raw16(GYRO_XOUT_H + 2)
     gz = read_raw16(GYRO_XOUT_H + 4)
     # convert to physical units
-    ax_g = ax / ACCEL_SCALE
+    ax_g = -1*(ax / ACCEL_SCALE)
     ay_g = ay / ACCEL_SCALE
-    az_g = az / ACCEL_SCALE
+    az_g = -1*(az / ACCEL_SCALE)
     gx_dps = gx / GYRO_SCALE
     gy_dps = gy / GYRO_SCALE
     gz_dps = gz / GYRO_SCALE
-    return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps)
+    return (ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps, ax, ay, az)
 
 # ---- Utility: accel -> angles (degrees) ----
 def accel_to_pitch_roll(ax, ay, az):
@@ -84,7 +88,7 @@ def calibrate_gyro(samples=200, delay_ms=5):
     print("Calibrating gyro bias: keep board still...")
     gx_sum = gy_sum = gz_sum = 0.0
     for i in range(samples):
-        ax, ay, az, gx, gy, gz = read_accel_gyro()
+        ax, ay, az, gx, gy, gz, bad1, bad2, bad3 = read_accel_gyro()
         gx_sum += gx
         gy_sum += gy
         gz_sum += gz
@@ -97,12 +101,18 @@ def calibrate_gyro(samples=200, delay_ms=5):
 
 # ---- Main ----
 def main():
+    print("Spork startup in progress")
     try:
         mpu_init()
     except Exception as e:
         print("MPU init failed:", e)
         return
-
+    
+    # WiFi setup
+#     do_disconnect()
+#     do_connect()
+#     sync_time()
+    
     # warm up read
     sleep_ms(100)
     
@@ -116,9 +126,13 @@ def main():
     pitch_pid = PID(kp, ki, kd)
     roll_pid = PID(kp, ki, kd)
     
+    # init motor : Motor(start frequency, Pin number, High cutoff frequency, Low cutoff frequency)
+    motor_pitch = Motor(300, 25, 550, 300)
+    motor_roll = Motor(300, 26, 400, 200)
+    
     # init motor start positions
-    motor1 = Motor(300, 26)
-    motor2 = Motor(300, 25)
+    motor_roll.move(300)
+    motor_pitch.move(400)
     
     # Create Kalman filters for pitch and roll
     # Tweak Q and R to taste: smaller R -> trusts accelerometer more (less smoothing),
@@ -127,7 +141,7 @@ def main():
     kalman_roll  = KalmanAngle(Q_angle=0.001, Q_bias=0.003, R_measure=0.03)
 
     # Initialize angles from accel for a stable starting point
-    ax, ay, az, gx, gy, gz = read_accel_gyro()
+    ax, ay, az, gx, gy, gz, ax_raw, ay_raw, az_raw = read_accel_gyro()
     pitch, roll = accel_to_pitch_roll(ax, ay, az)
     kalman_pitch.set_angle(pitch)
     kalman_roll.set_angle(roll)
@@ -141,57 +155,80 @@ def main():
     
     proj_pitch_angle = 0
     proj_roll_angle = 0
+    packet = {}
+    samples = []
+    samps = 0
     print("Starting filter loop. Ctrl+C to stop.")
     while True:
+        ts = int(time.time())
         now = ticks_us()
         dt = ticks_diff(now, last_time) / 1_000_000.0  # seconds
         if dt <= 0:
             dt = 0.001
         last_time = now
 
-        ax, ay, az, gx_raw, gy_raw, gz_raw = read_accel_gyro()
-
+        ax, ay, az, gx_raw, gy_raw, gz_raw, ax_raw, ay_raw, az_raw = read_accel_gyro()
+        
+        # WiFi Send Packet (Commented out for testing)
+#         if samps == 0:
+#             temp = read_temp_data()
+#         elif samps == 50:
+#             print(packet)
+#             send_packet(packet)
+#             packet = {}
+#             samples = []
+#             samps = 0
+#         samps += 1
+#         if samps < 50:
+#             samples.append([ax_raw, ay_raw, az_raw, temp])
+#             packet = {"timestamp" : ts, "samples" : samples}
+#             
+#         print("Sample Number ", samps)
+        
         # subtract calibration biases from gyro readings
         gx = gx_raw - gx_bias
         gy = gy_raw - gy_bias
         gz = gz_raw - gz_bias
-
+        
         # compute accelerometer angles
         a_roll, a_pitch = accel_to_pitch_roll(ax, ay, az)
 
         # feed gyro rates (dps) and accel angle (deg) into kalman filters
-        pitch_angle = kalman_pitch.get_angle(gx, a_pitch, dt)
-        roll_angle  = -1 * kalman_roll.get_angle(gy, a_roll, dt)
+        pitch_angle = (-1*kalman_pitch.get_angle(gx, a_pitch, dt))
+        roll_angle  = (-1*kalman_roll.get_angle(gy, a_roll, dt))
         
         # Calculate new projected angle
-#         proj_pitch_angle = pitch_angle + pitch_control_output
-#         proj_roll_angle = roll_angle + roll_control_output
         pitch_diff = pitch_angle - last_pitch
-        print("Pitch diff: ", pitch_diff)
         proj_pitch_angle = proj_pitch_angle + pitch_angle + pitch_control_output
         
         roll_diff = roll_angle - last_roll
-        print("Roll diff: ", roll_diff)
         proj_roll_angle = proj_roll_angle + roll_angle + roll_control_output
             
-        print("Projected Pitch: ", proj_pitch_angle)
-        print("Projected Roll: ", proj_roll_angle)
-        
         last_pitch = pitch_angle
         last_roll = roll_angle
         
-        # placeholder
-        yaw_angle = 0
+        # Update control values to PID controller output
         pitch_control_output = pitch_pid.update(0, proj_pitch_angle)
         roll_control_output = roll_pid.update(0, proj_roll_angle)
-        motor1.move(pitch_control_output)
-        motor2.move(roll_control_output)
         
+        # move pitch
+#         motor_roll.move(0)
+        motor_pitch.move(pitch_control_output)
+        
+        sleep_ms(10)
+        
+        # move roll
+#         motor_pitch.move(0)
+        motor_roll.move(roll_control_output)
+        
+        new = ticks_us()
+        time_diff = ticks_diff(new, now) / 1_000_000.0  # seconds
+        print("Time Difference: " + str(time_diff) + " Seconds")
         print("Pitch Angle  :{:+06.2f} | Roll Angle  :{:+06.2f}".format(pitch_angle, roll_angle))
         print("Pitch Control:{:+06.2f} | Roll Control:{:+06.2f}".format(pitch_control_output, roll_control_output))
        
        # adjust sleep to control update rate; loop timing dominated by i2c read
-        sleep_ms(10)
+        sleep_ms(100)
 
 if __name__ == "__main__":
     main()

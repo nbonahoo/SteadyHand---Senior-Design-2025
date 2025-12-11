@@ -34,5 +34,5 @@ def do_disconnect():
     else:
         print("No active Wi-Fi connection found.")
 
-do_disconnect()
-do_connect()
+# do_disconnect()
+# do_connect()
